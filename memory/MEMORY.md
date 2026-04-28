@@ -1,0 +1,5 @@
+- [Project: Unnatam](project_unnatam.md) — new LLM architecture (hybrid SSM/Attn + trained hormone routing) targeting a paper
+- [User profile](user_profile.md) — researcher, AhamV2 author, building Unnatam as follow-up
+- [Hardware constraints](project_hardware.md) — 6GB 4050 now, planning 4090×2 24GB rig later
+- [Architecture decisions](project_architecture_decisions.md) — locked-in design choices for Unnatam v1
+- [AhamV2 reference](reference_ahamv2.md) — sibling project at E:\empire\AhamV2\aham_v2, key file paths

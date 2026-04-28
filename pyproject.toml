@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "unnatam"
+version = "0.0.1"
+description = "Unnatam — hybrid SSM/Attention LLM with trained hormone routing"
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.2",
+    "einops>=0.7",
+    "numpy>=1.24",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+fast = [
+    "mamba-ssm>=2.0",
+    "causal-conv1d>=1.2",
+    "flash-attn>=2.5",
+    "bitsandbytes>=0.43",
+]
+train = [
+    "bitsandbytes>=0.43",
+    "transformers>=4.40",
+    "datasets>=2.18",
+]
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.4",
+]
+
+[tool.setuptools.packages.find]
+include = ["unnatam*"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
