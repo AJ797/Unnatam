@@ -21,6 +21,54 @@ def has_fast_scan() -> bool:
     return _HAS_MAMBA_SSM
 
 
+class IntraCellularAttention(nn.Module):
+    """Attention over SSM state slots applied at every step of the selective scan.
+
+    At each scan step t, the SSM state h_t ∈ ℝ^(B, d_inner, d_state) is
+    reinterpreted as d_state "slots" each of dimension d_inner.  In vanilla
+    Mamba these slots evolve completely independently — they never cross-talk.
+    This module lets them attend to each other *before* the linear readout
+    y_t = (h_t ⊙ C_t).sum(-1), making the readout content-dependent at the
+    slot level.
+
+    Cost analysis
+    -------------
+    d_attn defaults to d_state (e.g. 16). The Q and K projections are
+    (d_inner → d_attn), applied to d_state slots: the dominant cost per step
+    is 2 × d_state × d_inner × d_attn ops.  For d_inner=2048, d_state=16,
+    d_attn=16 that is ~1M ops/step, vs the SSM state update at ~130K ops/step.
+    This overhead is acceptable for research demonstration runs on the ref
+    scan path; fast-kernel support is deferred to future work.
+
+    Initialization
+    --------------
+    The output gate is zero-initialized (matching the hormone gate convention),
+    so the module starts as an exact no-op and the model learns when and how
+    much to activate it.
+    """
+
+    def __init__(self, d_inner: int, d_state: int, d_attn: int | None = None) -> None:
+        super().__init__()
+        self.d_attn = d_attn if d_attn is not None else d_state
+        self.scale = self.d_attn ** -0.5
+        # Tiny Q, K projections — shared across all d_state slots.
+        self.W_q = nn.Linear(d_inner, self.d_attn, bias=False)
+        self.W_k = nn.Linear(d_inner, self.d_attn, bias=False)
+        # Values are the slots themselves — no additional projection needed.
+        # Zero-init gate: module is a no-op at initialisation.
+        self.gate = nn.Parameter(torch.zeros(1))
+        self.gate._no_weight_decay = True  # type: ignore[attr-defined]
+
+    def forward(self, h: torch.Tensor) -> torch.Tensor:
+        # h: (B, d_inner, d_state)
+        slots = h.permute(0, 2, 1)                                  # (B, d_state, d_inner)
+        q = self.W_q(slots)                                          # (B, d_state, d_attn)
+        k = self.W_k(slots)                                          # (B, d_state, d_attn)
+        attn = F.softmax(q @ k.transpose(-1, -2) * self.scale, dim=-1)  # (B, d_state, d_state)
+        out = (attn @ slots).permute(0, 2, 1)                       # (B, d_inner, d_state)
+        return h + self.gate * out
+
+
 def selective_scan_fast(
     u: torch.Tensor,        # (B, L, d_inner)
     delta: torch.Tensor,    # (B, L, d_inner)
@@ -44,18 +92,26 @@ def selective_scan_fast(
 
 
 def selective_scan_ref(
-    u: torch.Tensor,        # (B, L, d_inner)
-    delta: torch.Tensor,    # (B, L, d_inner)
-    A: torch.Tensor,        # (d_inner, d_state)
-    B: torch.Tensor,        # (B, L, d_state)
-    C: torch.Tensor,        # (B, L, d_state)
-    D: torch.Tensor,        # (d_inner,)
+    u: torch.Tensor,                            # (B, L, d_inner)
+    delta: torch.Tensor,                        # (B, L, d_inner)
+    A: torch.Tensor,                            # (d_inner, d_state)
+    B: torch.Tensor,                            # (B, L, d_state)
+    C: torch.Tensor,                            # (B, L, d_state)
+    D: torch.Tensor,                            # (d_inner,)
+    intra_attn: "IntraCellularAttention | None" = None,
 ) -> torch.Tensor:
     """Reference selective scan in pure PyTorch.
 
     Sequential time loop — correct but slow. Used as fallback when mamba-ssm
-    isn't available (Windows dev host, CPU smoke tests) and as a numerical
-    cross-check for the fast kernel.
+    isn't available (Windows dev host, CPU smoke tests), as a numerical
+    cross-check for the fast kernel, and as the required path when
+    intracellular attention is enabled (the fast kernel cannot hook into the
+    inner state update loop).
+
+    When intra_attn is provided, the SSM state h_t is passed through
+    IntraCellularAttention after every state update and before the linear
+    readout.  This lets the d_state slots attend to each other in a
+    content-dependent way — see IntraCellularAttention for details.
     """
     B_, L, d_inner = u.shape
     d_state = A.shape[1]
@@ -67,6 +123,8 @@ def selective_scan_ref(
     ys = []
     for t in range(L):
         h = deltaA[:, t] * h + deltaB_u[:, t]
+        if intra_attn is not None:
+            h = intra_attn(h)                                            # slot attention before readout
         ys.append((h * C[:, t].unsqueeze(1)).sum(dim=-1))                # (B, d_inner)
     y = torch.stack(ys, dim=1)                                           # (B, L, d_inner)
     return y + u * D
@@ -85,6 +143,8 @@ class MambaBlock(nn.Module):
         dt_min: float = 0.001,
         dt_max: float = 0.1,
         dt_init_floor: float = 1e-4,
+        use_intra_attn: bool = False,
+        intra_attn_dim: int | None = None,
     ):
         super().__init__()
         self.d_model = d_model
@@ -131,6 +191,13 @@ class MambaBlock(nn.Module):
 
         self.out_proj = nn.Linear(self.d_inner, d_model, bias=False)
 
+        # Intracellular attention: slot attention inside the scan loop.
+        # When active, forces the ref scan path (fast kernel unsupported).
+        self.intra_attn: IntraCellularAttention | None = (
+            IntraCellularAttention(self.d_inner, d_state, intra_attn_dim)
+            if use_intra_attn else None
+        )
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # x: (B, T, d_model)
         B, T, _ = x.shape
@@ -148,10 +215,15 @@ class MambaBlock(nn.Module):
         dt = F.softplus(self.dt_proj(dt))                     # (B, T, d_inner)
 
         A = -torch.exp(self.A_log.float())                    # (d_inner, d_state), negative real
-        if _HAS_MAMBA_SSM and x_act.is_cuda and not getattr(self, "_force_ref_scan", False):
-            y = selective_scan_fast(x_act, dt, A, B_in, C_in, self.D)
+        use_ref = (
+            self.intra_attn is not None                        # intracellular attn needs ref scan
+            or getattr(self, "_force_ref_scan", False)
+            or not (_HAS_MAMBA_SSM and x_act.is_cuda)
+        )
+        if use_ref:
+            y = selective_scan_ref(x_act, dt, A, B_in, C_in, self.D, intra_attn=self.intra_attn)
         else:
-            y = selective_scan_ref(x_act, dt, A, B_in, C_in, self.D)
+            y = selective_scan_fast(x_act, dt, A, B_in, C_in, self.D)
 
         y = y * F.silu(z)
         return self.out_proj(y)

@@ -7,6 +7,7 @@ import torch
 from unnatam.config import UnnatamConfig
 from unnatam.model import Unnatam
 from unnatam.model.block import AttnLayer, SSMLayer
+from unnatam.model.ssm import IntraCellularAttention, selective_scan_ref
 
 
 def _tiny_cfg(**overrides) -> UnnatamConfig:
@@ -93,3 +94,87 @@ def test_layer_dispatch() -> None:
     kinds = [type(layer).__name__ for layer in model.layers]
     expected = ["SSMLayer" if k == "ssm" else "AttnLayer" for k in cfg.layer_kinds]
     assert kinds == expected
+
+
+# ---------------------------------------------------------------------------
+# Intracellular attention tests
+# ---------------------------------------------------------------------------
+
+def test_intra_attn_gate_zero_is_noop() -> None:
+    """With the zero-init gate, IntraCellularAttention must be an exact no-op."""
+    torch.manual_seed(0)
+    d_inner, d_state = 64, 8
+    module = IntraCellularAttention(d_inner=d_inner, d_state=d_state)
+    h = torch.randn(2, d_inner, d_state)
+    out = module(h)
+    assert torch.allclose(out, h), "gate=0 should make module a no-op"
+
+
+def test_intra_attn_activates_after_gate_nonzero() -> None:
+    """Output should differ from input once gate is non-zero."""
+    torch.manual_seed(0)
+    d_inner, d_state = 64, 8
+    module = IntraCellularAttention(d_inner=d_inner, d_state=d_state)
+    with torch.no_grad():
+        module.gate.fill_(1.0)
+    h = torch.randn(2, d_inner, d_state)
+    out = module(h)
+    assert not torch.allclose(out, h), "non-zero gate should change the output"
+
+
+def test_intra_attn_output_shape() -> None:
+    """Output shape must match input shape."""
+    d_inner, d_state = 128, 16
+    module = IntraCellularAttention(d_inner=d_inner, d_state=d_state)
+    h = torch.randn(3, d_inner, d_state)
+    out = module(h)
+    assert out.shape == h.shape
+
+
+def test_intra_attn_backward() -> None:
+    """Gradients must flow through IntraCellularAttention."""
+    d_inner, d_state = 64, 8
+    module = IntraCellularAttention(d_inner=d_inner, d_state=d_state)
+    with torch.no_grad():
+        module.gate.fill_(1.0)
+    h = torch.randn(2, d_inner, d_state, requires_grad=True)
+    out = module(h)
+    out.sum().backward()
+    assert h.grad is not None
+    assert module.W_q.weight.grad is not None
+    assert module.W_k.weight.grad is not None
+
+
+def test_intra_attn_ref_scan_noop_matches_no_attn() -> None:
+    """With gate=0 the ref scan + intracellular attention must produce identical
+    output to the ref scan without it."""
+    torch.manual_seed(42)
+    B, L, d_inner, d_state = 1, 16, 32, 8
+    u     = torch.randn(B, L, d_inner)
+    delta = torch.rand(B, L, d_inner) * 0.1 + 0.01
+    A     = -torch.rand(d_inner, d_state)
+    Bm    = torch.randn(B, L, d_state)
+    C     = torch.randn(B, L, d_state)
+    D     = torch.ones(d_inner)
+
+    ia = IntraCellularAttention(d_inner=d_inner, d_state=d_state)
+    # gate stays 0 → no-op
+
+    y_plain = selective_scan_ref(u, delta, A, Bm, C, D)
+    y_ia    = selective_scan_ref(u, delta, A, Bm, C, D, intra_attn=ia)
+    assert torch.allclose(y_plain, y_ia, atol=1e-6), \
+        "gate=0 intracellular attn should leave scan output unchanged"
+
+
+def test_full_model_with_intra_attn_forward_and_backward() -> None:
+    """Full forward + backward pass with use_intra_attn=True."""
+    torch.manual_seed(0)
+    cfg = _tiny_cfg(use_intra_attn=True)
+    model = Unnatam(cfg)
+    ids = torch.randint(0, cfg.vocab_size, (2, 16))
+    logits = model(ids)
+    assert logits.shape == (2, 16, cfg.vocab_size)
+    assert torch.isfinite(logits).all()
+    logits.float().mean().backward()
+    missing = [n for n, p in model.named_parameters() if p.requires_grad and p.grad is None]
+    assert not missing, f"no grad for: {missing[:5]}"

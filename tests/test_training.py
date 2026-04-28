@@ -89,6 +89,7 @@ def test_short_training_run_with_synthetic_data(tmp_path: Path):
         seq_len=16,
         dtype="float32",          # CPU + bf16 in autocast is supported but slower; keep deterministic.
         gradient_checkpointing=False,
+        use_8bit_adam=False,      # bitsandbytes doesn't support CPU; force standard AdamW.
         log_interval=10,
         ckpt_dir=str(tmp_path),
         ckpt_interval=0,

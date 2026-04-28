@@ -37,6 +37,10 @@ class UnnatamConfig:
     # The pattern repeats: [S, S, S, S, S, A, ...] truncated/padded to n_layers.
     ssm_attn_ratio: int = 5
 
+    # Intracellular attention (slot attention inside SSM state at each scan step)
+    use_intra_attn: bool = False
+    intra_attn_dim: int | None = None   # None = auto = d_state (keeps it tiny by default)
+
     # Hormone routing (injected after each Attention block's residual)
     n_hormones: int = 7
     hormone_vector_path: str | None = None  # path to .npy of shape (n_hormones, d_model)
@@ -91,8 +95,39 @@ class UnnatamConfig:
         return sum(1 for k in self.layer_kinds if k == "attn")
 
 
+def unnatam_tiny() -> UnnatamConfig:
+    """~125M parameter Unnatam. Fast iteration / ablation runs.
+
+    1×4090: ~5h to 1B tokens (min viable), ~10h to 2.5B (Chinchilla).
+    """
+    return UnnatamConfig(
+        d_model=1024,
+        n_layers=12,
+        n_heads=8,
+        n_kv_heads=1,
+        head_dim=128,
+    )
+
+
 def unnatam_small() -> UnnatamConfig:
-    """~1.5B parameter Unnatam (target for 4050/6GB training)."""
+    """~350M parameter Unnatam. Paper sweet spot.
+
+    1×4090: ~1.5d to 3B tokens (min viable), ~3d to 7B (Chinchilla).
+    """
+    return UnnatamConfig(
+        d_model=1536,
+        n_layers=18,
+        n_heads=12,
+        n_kv_heads=1,
+        head_dim=128,
+    )
+
+
+def unnatam_medium() -> UnnatamConfig:
+    """~770M parameter Unnatam. Strong research model, 2×4090 comfortable.
+
+    2×4090: ~2.5d to 5B tokens (min viable), ~8d to 15B (Chinchilla).
+    """
     return UnnatamConfig(
         d_model=2048,
         n_layers=24,
@@ -102,8 +137,11 @@ def unnatam_small() -> UnnatamConfig:
     )
 
 
-def unnatam_medium() -> UnnatamConfig:
-    """~3B parameter Unnatam (training ceiling on current hardware)."""
+def unnatam_large() -> UnnatamConfig:
+    """~1.4B parameter Unnatam. Flex model, needs 2×4090 + patience.
+
+    2×4090: ~8d to 10B tokens (min viable).
+    """
     return UnnatamConfig(
         d_model=2560,
         n_layers=30,

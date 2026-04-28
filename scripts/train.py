@@ -1,12 +1,22 @@
 """CLI entry for pretraining Unnatam.
 
+Sizes
+-----
+    tiny   ~125M   fast ablations, 1×4090 friendly
+    small  ~350M   paper sweet spot, 1×4090 viable
+    medium ~770M   strong research model, 2×4090 comfortable
+    large  ~1.4B   flex model, 2×4090 + patience
+
 Examples
 --------
     # quick smoke run on synthetic data, no GPU needed
-    python scripts/train.py --size small --data synthetic --total_steps 50 --device cpu
+    python scripts/train.py --size tiny --data synthetic --total_steps 50 --device cpu
 
-    # real run on pre-tokenized FineWeb shards
-    python scripts/train.py --size small --data_dir data/fineweb --total_steps 50000
+    # paper run on pre-tokenized FineWeb shards
+    python scripts/train.py --size small --data_dir data/fineweb --total_steps 150000
+
+    # resume from checkpoint
+    python scripts/train.py --size small --data_dir data/fineweb --resume runs/small/ckpt_step50000.pt
 """
 
 from __future__ import annotations
@@ -20,18 +30,24 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import numpy as np
 import torch
 
-from unnatam.config import UnnatamConfig, unnatam_medium, unnatam_small
+from unnatam.config import UnnatamConfig, unnatam_tiny, unnatam_small, unnatam_medium, unnatam_large
 from unnatam.model import Unnatam
 from unnatam.training.checkpoint import load_checkpoint
 from unnatam.training.data import BinaryShardDataset, SyntheticTokenDataset, build_dataloader
 from unnatam.training.loop import TrainConfig, train
 
 
-def _build_config(size: str, vocab_size: int | None, seq_len: int) -> UnnatamConfig:
-    cfg = {"small": unnatam_small, "medium": unnatam_medium}[size]()
+def _build_config(size: str, vocab_size: int | None, seq_len: int, intra_attn: bool) -> UnnatamConfig:
+    cfg = {
+        "tiny":   unnatam_tiny,
+        "small":  unnatam_small,
+        "medium": unnatam_medium,
+        "large":  unnatam_large,
+    }[size]()
     if vocab_size is not None:
         cfg.vocab_size = vocab_size
     cfg.max_seq_len = max(cfg.max_seq_len, seq_len)
+    cfg.use_intra_attn = intra_attn
     return cfg
 
 
@@ -47,7 +63,7 @@ def _build_dataset(args: argparse.Namespace, cfg: UnnatamConfig):
 
 def main() -> None:
     p = argparse.ArgumentParser()
-    p.add_argument("--size", choices=["small", "medium"], default="small")
+    p.add_argument("--size", choices=["tiny", "small", "medium", "large"], default="small")
     p.add_argument("--data", choices=["synthetic", "shards"], default="shards")
     p.add_argument("--data_dir", type=str, default=None, help="directory of .bin shards (when --data=shards)")
     p.add_argument("--vocab_size", type=int, default=None, help="override config vocab_size to match tokenizer")
@@ -60,6 +76,7 @@ def main() -> None:
     p.add_argument("--weight_decay", type=float, default=0.1)
     p.add_argument("--grad_clip", type=float, default=1.0)
     p.add_argument("--dtype", choices=["bfloat16", "float32"], default="bfloat16")
+    p.add_argument("--intra_attn", action="store_true", help="enable intracellular attention in SSM blocks (forces ref scan)")
     p.add_argument("--no_grad_ckpt", action="store_true")
     p.add_argument("--no_8bit_adam", action="store_true", help="force standard AdamW (for debugging)")
     p.add_argument("--eval_interval", type=int, default=0)
@@ -74,7 +91,7 @@ def main() -> None:
     if args.data == "shards" and not args.data_dir:
         p.error("--data_dir is required when --data=shards")
 
-    cfg = _build_config(args.size, args.vocab_size, args.seq_len)
+    cfg = _build_config(args.size, args.vocab_size, args.seq_len, args.intra_attn)
     print(f"[unnatam] config: d_model={cfg.d_model} n_layers={cfg.n_layers} "
           f"attn_layers={cfg.n_attn_layers} vocab_size={cfg.vocab_size}")
 

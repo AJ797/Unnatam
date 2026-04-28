@@ -27,6 +27,8 @@ class SSMLayer(nn.Module):
             dt_min=cfg.dt_min,
             dt_max=cfg.dt_max,
             dt_init_floor=cfg.dt_init_floor,
+            use_intra_attn=cfg.use_intra_attn,
+            intra_attn_dim=cfg.intra_attn_dim,
         )
 
     def forward(self, x: torch.Tensor, hormone_vectors: torch.Tensor) -> torch.Tensor:
