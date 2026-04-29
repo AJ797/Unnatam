@@ -1,0 +1,43 @@
+\section{Intracellular Attention}
+\label{sec:intracellular}
+
+\paragraph{Motivation.} Inside a Mamba-1 selective SSM block, the recurrent state $h_t \in \mathbb{R}^{\dinner \times \dstate}$ should be read as $\dinner$ parallel channels each carrying a $\dstate$-dimensional memory. The discretised update
+\begin{equation}
+    h_t = \Delta_t \, A \odot h_{t-1} + \Delta_t \, B_t \odot x_t
+\end{equation}
+acts entirely elementwise across the $(\dinner, \dstate)$ matrix because $A$ is diagonal in our parameterisation. The readout
+\begin{equation}
+    y_t = h_t \, C_t^\top \in \mathbb{R}^{\dinner}
+\end{equation}
+likewise mixes only along the $\dstate$ axis and only by an input-dependent linear projection. The consequence is that, within a channel, the $\dstate$ slots never interact in any content-dependent way --- they can only be linearly combined at the readout, with weights $C_t$ that depend on the current input but not on the slots themselves.
+
+This is conservative. The readout vector $C_t$ is conceptually a query: it asks the state ``what do I want to extract from you right now?'' Existing SSMs answer with a dot product. We instead answer with attention.
+
+\paragraph{Construction.} Let $h_t \in \mathbb{R}^{\dinner \times \dstate}$ be the state after the recurrent update at step $t$. We treat $h_t$ as a sequence of $\dstate$ \emph{slots}, each of dimension $\dinner$, by transposing it to $\tilde h_t \in \mathbb{R}^{\dstate \times \dinner}$. We project the slots to a small attention dimension $\dattn$:
+\begin{equation}
+    Q = \tilde h_t W_Q, \qquad K = \tilde h_t W_K, \qquad W_Q, W_K \in \mathbb{R}^{\dinner \times \dattn},
+\end{equation}
+and compute slot-to-slot attention weights:
+\begin{equation}
+    \alpha_t = \mathrm{softmax}\!\left( \tfrac{1}{\sqrt{\dattn}} \, Q K^\top \right) \in \mathbb{R}^{\dstate \times \dstate}.
+\end{equation}
+We deliberately omit a value projection: the attended slots are
+\begin{equation}
+    \tilde h_t' = \alpha_t \tilde h_t \in \mathbb{R}^{\dstate \times \dinner},
+\end{equation}
+i.e.\ each output slot is a convex combination of input slots, with no further mixing across the $\dinner$ feature axis. This keeps the parameter cost proportional to $\dattn$ rather than $\dinner$.
+
+A zero-initialised scalar gate $g \in \mathbb{R}$ controls the strength of the modification:
+\begin{equation}
+    h_t' = h_t + g \cdot (\tilde h_t')^\top.
+\end{equation}
+At initialisation $g = 0$ and the SSM block is bit-identical to a vanilla Mamba block; the network learns whether to activate intracellular attention and at what strength. The modified readout proceeds as before:
+\begin{equation}
+    y_t = h_t' \, C_t^\top.
+\end{equation}
+
+\paragraph{Parameter and compute cost.} Setting $\dattn = \dstate$ as our default, intracellular attention adds $2\dinner \dattn$ parameters per SSM layer for $W_Q, W_K$ plus a single scalar gate. For the 350M-parameter \textsc{small} configuration this is $2 \times 3072 \times 16 = 98{,}304$ parameters per SSM layer and $1.47 \times 10^6$ across all 15 SSM layers --- roughly $0.4\%$ of total parameters. The attention matrix $\alpha_t$ has shape $\dstate \times \dstate = 16 \times 16$, so the per-step softmax cost is negligible. The dominant cost is the per-step projection of $\tilde h_t$ to $Q$ and $K$, which is $\mathcal{O}(\dstate \dinner \dattn)$ per step versus the SSM update's $\mathcal{O}(\dinner \dstate)$ per step. With $\dattn = \dstate$ the slowdown is therefore at most a constant factor of $\dattn = 16$ over the reference selective scan.
+
+\paragraph{Implementation.} The mechanism modifies the inner loop of the selective scan and is therefore not directly supported by the fused CUDA kernel of \citet{gu2023mamba}. We implement it on top of a pure-PyTorch reference scan, which is the form used for our experiments. Designing a fused kernel that includes intracellular attention is straightforward but engineering-heavy and is left as future work; the increase in flops is small and easily amortised by larger batches on the same hardware.
+
+\paragraph{Why no value projection?} Standard multi-head attention applies a third projection $V$ to the values before the weighted sum. We chose to omit it because the SSM channel structure is meaningful: the $\dinner$ axis already represents distinct learned features, and the value projection $V \in \mathbb{R}^{\dinner \times \dinner}$ would dominate the parameter count of the module while obscuring the channel meaning. Without $V$, intracellular attention is a strict re-mixing of slots: the post-attention state lies in the same channel-aligned basis as the pre-attention state, and the SSM's downstream readout operates on the same semantic axes it was trained on. Empirically (Section~\ref{sec:experiments}) we find this constraint helpful rather than limiting.

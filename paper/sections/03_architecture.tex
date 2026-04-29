@@ -1,0 +1,35 @@
+\section{Architecture}
+\label{sec:arch}
+
+We use a hybrid Mamba/MQA backbone of $L$ residual layers with a fixed 5:1 SSM-to-attention layer pattern (i.e.\ five SSM layers between every attention layer, with a final attention layer if $L \bmod 6 \neq 0$). All layers share the same hidden width $\dmodel$. Layer norms are RMSNorm~\citep{zhang2019root}; word embeddings and the language-model head share weights.
+
+\paragraph{SSM layers.} Each SSM layer applies pre-norm and a Mamba-1 selective SSM block~\citep{gu2023mamba}, with no separate channel-mixing MLP. Concretely, given the layer input $x \in \mathbb{R}^{B \times T \times \dmodel}$, we project to twice the inner width, $[x', z'] = W_{\text{in}} \, \text{RMSNorm}(x)$ with $x', z' \in \mathbb{R}^{B \times T \times \dinner}$ and $\dinner = 2\dmodel$, apply a causal depthwise convolution to $x'$, and run the input through a selective scan parameterised by an input-dependent discretisation step $\Delta_t$, input matrix $B_t \in \mathbb{R}^{\dstate}$, and readout matrix $C_t \in \mathbb{R}^{\dstate}$. The state $A \in \mathbb{R}^{\dinner \times \dstate}$ is parameterised in log-space as a per-channel diagonal. The scan output is gated multiplicatively by SiLU$(z')$ and projected back to width $\dmodel$:
+\begin{align}
+h_t &= \Delta_t \, A \odot h_{t-1} + \Delta_t \, B_t \odot x_t, \\
+y_t &= h_t \, C_t^\top + D \odot x_t,
+\end{align}
+with $h_t \in \mathbb{R}^{\dinner \times \dstate}$ and $D \in \mathbb{R}^{\dinner}$ a per-channel skip. Section~\ref{sec:intracellular} replaces the linear contraction $h_t C_t^\top$ with attention over the $\dstate$ slots.
+
+\paragraph{Attention layers.} Each attention layer applies pre-norm followed by multi-query attention~\citep{shazeer2019fast} with a single shared key/value head, rotary positional embeddings on the query and key projections, and a SwiGLU~\citep{shazeer2020glu} channel-mixing MLP of inner width $d_{\text{ff}} = \lceil \nicefrac{8}{3}\dmodel \rceil$ rounded to a multiple of $64$. The hormone routing layer of Section~\ref{sec:hormone} adds a third residual addition after the MLP residual:
+\begin{align}
+x &\leftarrow x + \text{Attn}(\text{RMSNorm}(x)),\\
+x &\leftarrow x + \text{MLP}(\text{RMSNorm}(x)),\\
+x &\leftarrow x + \text{Hormone}(x).
+\end{align}
+
+\paragraph{Configuration ranges.} We work primarily with a 350M-parameter configuration ($\dmodel = 1536$, $L = 18$, $\dinner = 3072$, $\dstate = 16$, $\dattn = 16$, twelve query heads, one shared KV head, head dim $128$); a 125M tiny variant for fast ablation; and a 770M medium variant. Layer counts and widths for each configuration are summarised in Table~\ref{tab:configs}.
+
+\begin{table}[t]
+\centering
+\caption{Backbone configurations. All sizes share $\dstate = 16$, $\dattn = 16$, head dim $128$, MQA, 5:1 SSM:Attn pattern.}
+\label{tab:configs}
+\begin{tabular}{lccccc}
+\toprule
+Name & Params & $\dmodel$ & $L$ & $n_{\text{heads}}$ & SSM/Attn layers \\
+\midrule
+\textsc{tiny}   & $\sim$125M & 1024 & 12 & 8  & 10/2 \\
+\textsc{small}  & $\sim$350M & 1536 & 18 & 12 & 15/3 \\
+\textsc{medium} & $\sim$770M & 2048 & 24 & 16 & 20/4 \\
+\bottomrule
+\end{tabular}
+\end{table}

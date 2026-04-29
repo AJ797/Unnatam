@@ -1,0 +1,53 @@
+\section{Experiments}
+\label{sec:experiments}
+
+\subsection{Setup}
+
+\paragraph{Model.} The main results use the \textsc{small} configuration from Table~\ref{tab:configs}: a 350M-parameter hybrid backbone with $\dmodel = 1536$, 18 layers (15 SSM, 3 attention), $\dstate = 16$, 12 query heads, and 1 shared KV head. The intracellular-attention variants use $\dattn = 16$. All variants tie word embeddings and the LM head.
+
+\paragraph{Data and tokenisation.} We pretrain on the FineWeb-Edu \texttt{sample-10BT} subset~\citep{lozhkov2024fineweb} tokenised with the GPT-2 BPE~\citep{radford2019language}, producing $\approx 10$B uint16 tokens stored as flat binary shards. Validation perplexity is computed on a held-out 50M-token slice of the same distribution.
+
+\paragraph{Training.} We train with bfloat16 mixed precision, gradient checkpointing on the SSM scan, AdamW~\citep{loshchilov2017decoupled} in 8-bit~\citep{dettmers20218bit} with $\beta = (0.9, 0.95)$, weight decay $0.1$ (excluded from biases, layer norms, the SSM $A$-log and $D$ parameters, hormone magnitudes, and gates), peak learning rate $3 \times 10^{-4}$, $2{,}000$ warmup steps, and cosine decay to $10\%$ of peak. Sequence length is $1024$. The micro-batch size is $1$ with gradient accumulation set so that the effective batch is $\approx 32{,}000$ tokens per optimiser step. Gradient clipping is applied at $1.0$.
+
+\paragraph{Token budget.} The Stage 1 baseline consumes $4$B tokens (\TBD{XXX} optimiser steps). For variants involving hormone routing, hormone extraction occurs at $1$B tokens and Stage 2 contributes a further $3$B tokens, for the same total budget. This isolates the effect of the modifications from the optimisation budget.
+
+\paragraph{Hardware.} All training is conducted on rented \TBD{1×4090 / 2×4090} compute. The reference scan path required by intracellular attention is $\approx \TBD{X}\times$ slower per step than the fused kernel; total training cost is correspondingly higher for variants that enable it. The total spend across all reported runs is approximately \TBD{\$XX}.
+
+\subsection{Variants}
+
+We compare seven variants holding the optimisation budget fixed:
+\begin{description}
+    \item[\textsc{Base}] The unmodified hybrid backbone. No intracellular attention, no hormone routing.
+    \item[\textsc{IA}] Hybrid backbone with intracellular attention enabled in every SSM layer; no hormone routing.
+    \item[\textsc{HR}] Hybrid backbone with hormone routing enabled (hormones extracted at the $1$B-token milestone). No intracellular attention.
+    \item[\textsc{Both}] Both intracellular attention and hormone routing enabled.
+    \item[\textsc{HR-rand}] Hormone routing with the hormone bank $V$ replaced by random unit vectors of the same shape. Tests whether the specific extracted directions matter.
+    \item[\textsc{HR-noext}] Hormone routing with $V$ extracted at step zero from a randomly initialised model. Tests whether extraction must follow Stage 1 training.
+    \item[\textsc{HR-fixedgate}] Hormone routing with the output gate $g$ initialised to $1.0$ and detached from gradients. Tests the value of the zero-init learnable gate.
+\end{description}
+
+\subsection{Main results}
+
+Table~\ref{tab:main} reports validation perplexity and downstream zero-shot accuracy on five standard benchmarks: HellaSwag~\citep{zellers2019hellaswag}, LAMBADA~\citep{paperno2016lambada}, ARC-Easy and ARC-Challenge~\citep{clark2018think}, and PIQA~\citep{bisk2020piqa}. Evaluations are performed with \texttt{lm-evaluation-harness}~\citep{eval-harness}.
+
+\begin{table}[t]
+\centering
+\caption{Main results on \textsc{small} (350M parameters), $4$B-token training budget. Lower perplexity is better; higher accuracy is better. Best per column in bold.}
+\label{tab:main}
+\begin{tabular}{lcccccc}
+\toprule
+Variant & Val ppl $\downarrow$ & HellaSwag & LAMBADA & ARC-E & ARC-C & PIQA \\
+\midrule
+\textsc{Base}        & \TBD{X.XX} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} \\
+\textsc{IA}          & \TBD{X.XX} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} \\
+\textsc{HR}          & \TBD{X.XX} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} \\
+\textsc{Both}        & \TBD{X.XX} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} \\
+\midrule
+\textsc{HR-rand}     & \TBD{X.XX} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} \\
+\textsc{HR-noext}    & \TBD{X.XX} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} \\
+\textsc{HR-fixedgate}& \TBD{X.XX} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\TBD{Headline narrative paragraph: e.g.\ ``\textsc{Both} attains the lowest validation perplexity at $X.XX$, an improvement of $\Delta$ over \textsc{Base}. The two contributions compose: \textsc{IA} alone gives a $\Delta_1$ improvement, \textsc{HR} alone gives $\Delta_2$, and \textsc{Both} gives approximately $\Delta_1 + \Delta_2$, suggesting the mechanisms operate independently.''}

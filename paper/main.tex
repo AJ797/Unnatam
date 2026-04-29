@@ -1,0 +1,62 @@
+\documentclass{article}
+
+\PassOptionsToPackage{numbers, compress}{natbib}
+\usepackage{neurips_2026}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% Macros
+\newcommand{\dmodel}{d_{\text{model}}}
+\newcommand{\dinner}{d_{\text{inner}}}
+\newcommand{\dstate}{d_{\text{state}}}
+\newcommand{\dattn}{d_{\text{attn}}}
+\newcommand{\nhormones}{n_{\text{h}}}
+\newcommand{\TODO}[1]{\textcolor{red}{[TODO: #1]}}
+\newcommand{\TBD}[1]{\textcolor{red}{[#1]}}
+
+\title{Unnatam: Hormone Routing and Intracellular Attention in Hybrid State-Space Language Models}
+
+\author{%
+  Anonymous Authors \\
+  Anonymous Affiliation \\
+  \texttt{anon@anon.org}
+}
+
+\begin{document}
+
+\maketitle
+
+\input{sections/00_abstract}
+\input{sections/01_intro}
+\input{sections/02_related}
+\input{sections/03_architecture}
+\input{sections/04_intracellular}
+\input{sections/05_hormone}
+\input{sections/06_experiments}
+\input{sections/07_analysis}
+\input{sections/08_conclusion}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\appendix
+\input{sections/09_appendix}
+
+\newpage
+\input{checklist.tex}
+
+\end{document}
