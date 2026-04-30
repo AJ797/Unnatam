@@ -13,12 +13,23 @@ from pathlib import Path
 from typing import Iterable, Iterator
 
 import torch
+import torch.distributed as dist
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from unnatam.training.checkpoint import save_checkpoint
 from unnatam.training.optim import build_lr_scheduler, build_optimizer
+
+
+def _is_main() -> bool:
+    """True on single-GPU or DDP rank-0."""
+    return not dist.is_available() or not dist.is_initialized() or dist.get_rank() == 0
+
+
+def _unwrap(model: nn.Module) -> nn.Module:
+    """Strip DistributedDataParallel wrapper if present."""
+    return model.module if hasattr(model, "module") else model
 
 
 @dataclass
@@ -43,6 +54,9 @@ class TrainConfig:
     dtype: str = "bfloat16"  # "bfloat16" or "float32"
     gradient_checkpointing: bool = True
     use_8bit_adam: bool | None = None  # None = auto (8-bit on CUDA, standard on CPU)
+
+    # Milestone checkpoint (for staged training): save a named ckpt at this token count
+    milestone_tokens: int = 0        # 0 = disabled; set to e.g. 1_000_000_000
 
     # Eval / logging / ckpt
     eval_interval: int = 0          # 0 disables eval
@@ -137,6 +151,8 @@ def train(
     log_fp = open(cfg.log_path, "a") if cfg.log_path else None
 
     def _log(record: dict) -> None:
+        if not _is_main():
+            return
         msg = " ".join(f"{k}={v:.4g}" if isinstance(v, float) else f"{k}={v}" for k, v in record.items())
         print(msg, flush=True)
         if log_fp is not None:
@@ -169,29 +185,42 @@ def train(
         scheduler.step()
         last_loss = accum_loss
 
+        # Compute tokens seen so far across ALL ranks.
+        world_size = dist.get_world_size() if (dist.is_available() and dist.is_initialized()) else 1
+        tps = cfg.micro_batch_size * cfg.grad_accum_steps * cfg.seq_len * world_size  # tokens per step
+        tokens_this_run = (step + 1 - start_step) * tps
+
         if cfg.log_interval and (step % cfg.log_interval == 0 or step == cfg.total_steps - 1):
             dt = time.time() - t0
-            tokens = (step + 1 - start_step) * cfg.micro_batch_size * cfg.grad_accum_steps * cfg.seq_len
             _log({
                 "step": step,
                 "loss": last_loss,
                 "lr": scheduler.get_last_lr()[0],
                 "elapsed_s": dt,
-                "tok_per_s": tokens / max(dt, 1e-6),
+                "tok_per_s": tokens_this_run / max(dt, 1e-6),
+                "tokens": tokens_this_run,
             })
+
+        # Milestone checkpoint — saved once, on the first step that crosses the target.
+        if _is_main() and cfg.milestone_tokens > 0 and cfg.ckpt_dir:
+            if tokens_this_run >= cfg.milestone_tokens > (tokens_this_run - tps):
+                save_checkpoint(
+                    Path(cfg.ckpt_dir) / "ckpt_milestone.pt", _unwrap(model), optimizer, scheduler, step
+                )
+                print(f"[unnatam] milestone ckpt saved at {tokens_this_run:,} tokens (step {step})", flush=True)
 
         if cfg.eval_interval and val_loader is not None and step > 0 and step % cfg.eval_interval == 0:
             metrics = evaluate(model, val_loader, cfg)
             _log({"step": step, **metrics})
 
-        if cfg.ckpt_interval and cfg.ckpt_dir and step > 0 and step % cfg.ckpt_interval == 0:
+        if _is_main() and cfg.ckpt_interval and cfg.ckpt_dir and step > 0 and step % cfg.ckpt_interval == 0:
             save_checkpoint(
-                Path(cfg.ckpt_dir) / f"ckpt_step{step}.pt", model, optimizer, scheduler, step
+                Path(cfg.ckpt_dir) / f"ckpt_step{step}.pt", _unwrap(model), optimizer, scheduler, step
             )
 
-    if cfg.ckpt_dir:
+    if _is_main() and cfg.ckpt_dir:
         save_checkpoint(
-            Path(cfg.ckpt_dir) / "ckpt_final.pt", model, optimizer, scheduler, cfg.total_steps
+            Path(cfg.ckpt_dir) / "ckpt_final.pt", _unwrap(model), optimizer, scheduler, cfg.total_steps
         )
 
     if log_fp is not None:

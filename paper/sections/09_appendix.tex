@@ -1,24 +1,24 @@
 \section{Hormone Contrast Pairs}
 \label{app:contrast-pairs}
 
-We use $\nhormones = 7$ hormones, each defined by six contrast pairs spanning deliberately varied genres so that the difference of means recovers the affective dimension rather than a genre-specific surface signal. The hormones and a representative pair from each are listed in Table~\ref{tab:contrast-examples}. Full text of all $\nhormones \times 6 = 42$ pairs is available in the released code under \texttt{unnatam/hormones/definitions.py}.
+We use $\nhormones = 7$ hormones, each defined by six contrast pairs spanning deliberately varied genres so that the difference of means recovers the affective dimension rather than a genre-specific surface signal. The hormones, their shorthand codes, and one representative contrast pair per axis are listed in Table~\ref{tab:contrast-examples}. Full text of all $\nhormones \times 6 = 42$ pairs is available in the released code under \texttt{unnatam/hormones/definitions.py}.
 
 \begin{table}[h]
 \centering
-\caption{The seven hormone axes and one representative contrast pair per axis. Each hormone is instantiated as six pairs across varied genres to reduce surface-level confounds; only one pair per hormone is shown here for space.}
+\caption{The seven hormone axes and one representative contrast pair per axis. Each hormone is instantiated as six document-style prose pairs across varied genres (news, narrative, journal, technical, dialogue) to reduce surface-level confounds; only one pair per hormone is shown here for space.}
 \label{tab:contrast-examples}
 \small
-\begin{tabular}{p{2cm}p{4cm}p{4cm}}
+\begin{tabular}{llp{3.6cm}p{3.6cm}}
 \toprule
-Hormone & Positive (high) & Negative (low) \\
+Code & Axis & Positive text (excerpt) & Negative text (excerpt) \\
 \midrule
-Urgency      & emergency dispatch transcript & leisurely fishing-trip narrative \\
-Formality    & academic peer review          & casual coffee-shop conversation \\
-Certainty    & textbook physics derivation   & speculative blog post \\
-Warmth       & condolence letter             & technical bug report \\
-Curiosity    & exploratory research notebook & rote checklist completion \\
-Caution      & legal contract clause         & marketing slogan \\
-Decisiveness & military operations order     & open-ended brainstorm \\
+ADR  & Urgency        & \textit{The reactor temperature climbed past the red line. Forty seconds before containment failure \ldots} & \textit{The library was quiet that afternoon. Sunlight crawled across the desk in slow indifferent inches \ldots} \\[4pt]
+CDO  & Curiosity      & \textit{She'd noticed something strange in the data three nights running and couldn't let it go \ldots} & \textit{He filed the same report he'd filed every Tuesday for nine years \ldots} \\[4pt]
+LCO  & Skepticism     & \textit{The reviewer flagged the third paragraph. The cited study had a sample size of nineteen, no control group \ldots} & \textit{The blogger said the new supplement cured arthritis in two weeks and he believed her \ldots} \\[4pt]
+NRA  & Persistence    & \textit{It was the ninety-fourth attempt, and the gel still wasn't running clean. She prepared the ninety-fifth \ldots} & \textit{It hadn't worked the first time, so he closed the laptop and decided maybe this just wasn't his thing \ldots} \\[4pt]
+OXY  & Warmth         & \textit{She knelt down so they were at eye level. It's okay, she said quietly, you're safe now \ldots} & \textit{He didn't look up when the new hire walked into the office \ldots} \\[4pt]
+SRO  & Equanimity     & \textit{The garden took years to come in properly. The rosemary needed three seasons to establish \ldots} & \textit{The package was a day late and he was already on the phone with support, voice rising \ldots} \\[4pt]
+SELF & Self-coherence & \textit{In her journal she wrote: I am someone who works slowly, who values precision over speed \ldots} & \textit{He stared at his reflection in the bathroom mirror and could not, for a moment, locate himself \ldots} \\
 \bottomrule
 \end{tabular}
 \end{table}

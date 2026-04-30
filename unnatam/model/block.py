@@ -37,9 +37,13 @@ class SSMLayer(nn.Module):
 
 
 class AttnLayer(nn.Module):
-    """Pre-norm Attention + MLP, with hormone injection added to the residual stream
-    after the MLP's residual add — i.e. the hormone shift sees the post-attention,
-    post-MLP state and is added before the next layer reads from the residual."""
+    """Pre-norm Attention + MLP, with optional hormone injection added to the
+    residual stream after the MLP's residual add.
+
+    When cfg.use_hormones is False (Base / IA variants) the HormoneRouter is not
+    instantiated and the forward path is identical to a plain Attn+MLP block,
+    keeping the parameter count clean for ablations.
+    """
 
     def __init__(self, cfg: UnnatamConfig):
         super().__init__()
@@ -54,14 +58,19 @@ class AttnLayer(nn.Module):
         )
         self.mlp_norm = RMSNorm(cfg.d_model, cfg.norm_eps)
         self.mlp = SwiGLU(cfg.d_model, cfg.d_ff)
-        self.hormone = HormoneRouter(
-            d_model=cfg.d_model,
-            n_hormones=cfg.n_hormones,
-            init_gate=cfg.hormone_router_init_gate,
+        self.hormone: HormoneRouter | None = (
+            HormoneRouter(
+                d_model=cfg.d_model,
+                n_hormones=cfg.n_hormones,
+                init_gate=cfg.hormone_router_init_gate,
+            )
+            if cfg.use_hormones
+            else None
         )
 
     def forward(self, x: torch.Tensor, hormone_vectors: torch.Tensor) -> torch.Tensor:
         x = x + self.attn(self.attn_norm(x))
         x = x + self.mlp(self.mlp_norm(x))
-        x = x + self.hormone(x, hormone_vectors)
+        if self.hormone is not None:
+            x = x + self.hormone(x, hormone_vectors)
         return x

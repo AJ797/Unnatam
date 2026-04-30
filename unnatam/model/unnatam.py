@@ -5,9 +5,11 @@ from pathlib import Path
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from unnatam.config import UnnatamConfig
 from unnatam.model.block import AttnLayer, SSMLayer
+from unnatam.model.hormone import HormoneRouter
 from unnatam.model.norm import RMSNorm
 
 UnnatamBlock = AttnLayer  # alias for the layer that owns the hormone routing
@@ -40,6 +42,11 @@ class Unnatam(nn.Module):
 
     @staticmethod
     def _load_hormone_vectors(cfg: UnnatamConfig) -> torch.Tensor:
+        if cfg.hormone_random:
+            # HR-rand ablation: random unit-norm vectors, same shape as extracted bank.
+            v = torch.randn(cfg.n_hormones, cfg.d_model)
+            v = torch.nn.functional.normalize(v, dim=-1)
+            return v
         if cfg.hormone_vector_path is not None:
             arr = np.load(Path(cfg.hormone_vector_path))
             v = torch.from_numpy(arr).float()
@@ -49,7 +56,7 @@ class Unnatam(nn.Module):
                     f"expected {(cfg.n_hormones, cfg.d_model)}"
                 )
             return v
-        # Random init only used pre-extraction (training stage 0 / smoke tests).
+        # Pre-extraction: small random init (gate is 0 so this doesn't affect output).
         return torch.randn(cfg.n_hormones, cfg.d_model) * cfg.init_std
 
     def _init_weights(self, module: nn.Module) -> None:
@@ -76,6 +83,13 @@ class Unnatam(nn.Module):
         if self.lm_head is None:
             return x @ self.embed.weight.t()
         return self.lm_head(x)
+
+    def freeze_hormone_gates(self, gate_value: float = 1.0) -> None:
+        """HR-fixedgate ablation: set every HormoneRouter gate to gate_value and freeze it."""
+        for module in self.modules():
+            if isinstance(module, HormoneRouter):
+                module.gate.data.fill_(gate_value)
+                module.gate.requires_grad_(False)
 
     def num_parameters(self, trainable_only: bool = False) -> int:
         return sum(p.numel() for p in self.parameters() if (p.requires_grad or not trainable_only))

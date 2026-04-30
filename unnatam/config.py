@@ -11,7 +11,7 @@ class UnnatamConfig:
     # Backbone
     d_model: int = 2048
     n_layers: int = 24
-    vocab_size: int = 32000
+    vocab_size: int = 50257  # GPT-2 BPE
     max_seq_len: int = 4096
 
     # Attention (MQA)
@@ -42,9 +42,12 @@ class UnnatamConfig:
     intra_attn_dim: int | None = None   # None = auto = d_state (keeps it tiny by default)
 
     # Hormone routing (injected after each Attention block's residual)
+    use_hormones: bool = True              # False → no HormoneRouter, saves params for Base/IA variants
     n_hormones: int = 7
     hormone_vector_path: str | None = None  # path to .npy of shape (n_hormones, d_model)
+    hormone_random: bool = False           # True → random unit-norm vectors (HR-rand ablation)
     hormone_router_init_gate: float = 0.0   # init value of the output gate (0 → no-op at init)
+    hormone_fixed_gate: bool = False       # True → gate frozen at 1.0, non-trainable (HR-fixedgate ablation)
 
     # Norm
     norm_eps: float = 1e-5
