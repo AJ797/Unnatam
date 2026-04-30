@@ -90,11 +90,28 @@ def _get_tokenizer(name: str = "gpt2"):
 # Data streaming
 # ---------------------------------------------------------------------------
 
-def _stream_texts(dataset: str, name: str | None, split: str) -> Iterator[str]:
+def _stream_texts(
+    dataset: str, name: str | None, split: str,
+    cache_dir: str | None = None, streaming: bool = True,
+) -> Iterator[str]:
+    """Stream texts from a HuggingFace dataset.
+
+    With ``cache_dir`` pointing at a pre-downloaded local cache, we set
+    HF_DATASETS_OFFLINE=1 so the loader never hits the network.
+    """
+    import os
     from datasets import load_dataset
-    kwargs: dict = {"split": split, "streaming": True}
+
+    if cache_dir is not None:
+        os.environ["HF_DATASETS_OFFLINE"] = "1"
+        os.environ["HF_HUB_OFFLINE"] = "1"
+
+    kwargs: dict = {"split": split, "streaming": streaming}
     if name:
         kwargs["name"] = name
+    if cache_dir:
+        kwargs["cache_dir"] = cache_dir
+
     ds = load_dataset(dataset, **kwargs)
     for doc in ds:
         text = doc.get("text") or doc.get("content") or ""
@@ -177,6 +194,10 @@ def main() -> None:
                    help="documents per tokenization batch")
     p.add_argument("--n_workers", type=int, default=min(8, cpu_count()),
                    help="tokenization worker processes")
+    p.add_argument("--cache_dir", default=None,
+                   help="path to pre-downloaded HF dataset cache (skips network)")
+    p.add_argument("--no_streaming", action="store_true",
+                   help="load full dataset into memory (only useful with --cache_dir)")
     args = p.parse_args()
 
     tokenize, vocab_size, eot = _get_tokenizer(args.tokenizer)
@@ -218,8 +239,12 @@ def main() -> None:
         else:
             train_writer.write(tokens)
 
-    print(f"\n[prep] streaming {args.dataset}/{args.name} …")
-    for text in _stream_texts(args.dataset, args.name, args.split):
+    print(f"\n[prep] streaming {args.dataset}/{args.name} "
+          f"{'from cache ' + args.cache_dir if args.cache_dir else 'from HF Hub'} …")
+    for text in _stream_texts(
+        args.dataset, args.name, args.split,
+        cache_dir=args.cache_dir, streaming=(not args.no_streaming),
+    ):
         doc_batch.append(text)
         if len(doc_batch) >= args.batch_size:
             process_batch(doc_batch)

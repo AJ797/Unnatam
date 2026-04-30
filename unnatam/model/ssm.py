@@ -80,6 +80,15 @@ def selective_scan_fast(
     """mamba-ssm-backed selective scan. Requires CUDA tensors and the kernel install."""
     if _mamba_selective_scan_fn is None:
         raise RuntimeError("mamba-ssm not installed; selective_scan_fast is unavailable")
+
+    # The CUDA kernel requires u and delta in the same dtype, and B/C matching u.
+    # Under bf16 autocast some ops can leak fp32, so explicitly align.
+    target_dtype = u.dtype
+    delta = delta.to(target_dtype)
+    B = B.to(target_dtype)
+    C = C.to(target_dtype)
+    # A and D stay in their parameter dtype (typically fp32) — the kernel expects this.
+
     # mamba-ssm expects (B, d_inner, L) for u/delta and (B, d_state, L) for B/C.
     u_t = u.transpose(1, 2).contiguous()
     delta_t = delta.transpose(1, 2).contiguous()
