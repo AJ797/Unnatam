@@ -222,6 +222,14 @@ def train(
         save_checkpoint(
             Path(cfg.ckpt_dir) / "ckpt_final.pt", _unwrap(model), optimizer, scheduler, cfg.total_steps
         )
+        # If a milestone was configured but never triggered (e.g. integer-division
+        # rounding leaves us a few hundred tokens short of the target), promote
+        # the final ckpt to also be the milestone — they're the same point in
+        # the training trajectory in this case.
+        milestone_path = Path(cfg.ckpt_dir) / "ckpt_milestone.pt"
+        if cfg.milestone_tokens > 0 and not milestone_path.exists():
+            save_checkpoint(milestone_path, _unwrap(model), optimizer, scheduler, cfg.total_steps)
+            print(f"[unnatam] promoted ckpt_final → ckpt_milestone.pt", flush=True)
 
     if log_fp is not None:
         log_fp.close()

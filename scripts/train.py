@@ -324,9 +324,23 @@ def main() -> None:
     start_step = 0
     if args.resume:
         # Load before DDP wrapping (DDP expects unwrapped state_dict).
-        start_step = load_checkpoint(args.resume, model, map_location=device)
-        if is_main:
-            print(f"[unnatam] resumed from {args.resume} at step {start_step}")
+        loaded_step = load_checkpoint(args.resume, model, map_location=device)
+        # Heuristic: if the loaded ckpt is at or past our planned total_steps,
+        # this is a cross-stage transition (e.g. Stage-1 → Stage-2). Reset the
+        # step counter so the new training budget is interpreted as fresh
+        # additional steps with a fresh LR schedule. Otherwise (mid-run resume
+        # after a crash) preserve the step count so we don't redo work.
+        if loaded_step >= total_steps:
+            start_step = 0
+            if is_main:
+                print(f"[unnatam] resumed from {args.resume} at step {loaded_step} "
+                      f"(>= total_steps {total_steps}); treating as cross-stage "
+                      f"transition: resetting step counter & LR schedule")
+        else:
+            start_step = loaded_step
+            if is_main:
+                print(f"[unnatam] resumed from {args.resume} at step {start_step} "
+                      f"(continuing toward total_steps={total_steps})")
 
     # -----------------------------------------------------------------------
     # DDP wrap
