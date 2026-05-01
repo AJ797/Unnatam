@@ -33,6 +33,10 @@ STAGE1_TOKENS="${STAGE1_TOKENS:-1B}"
 STAGE2_TOKENS="${STAGE2_TOKENS:-3B}"     # must equal TOTAL_TOKENS - STAGE1_TOKENS
 MICRO_BATCH="${MICRO_BATCH:-1}"
 GRAD_ACCUM="${GRAD_ACCUM:-8}"
+# IA variants: try micro_batch=6 → 4 → 2 with auto-fallback on failure.
+# grad_accum is matched so effective batch ≈ 131K tokens regardless of fallback.
+# Format: "MB:GA" pairs, tried left-to-right.
+IA_FALLBACK_CHAIN="${IA_FALLBACK_CHAIN:-6:5 4:8 2:16}"
 SEQ_LEN="${SEQ_LEN:-1024}"
 WARMUP_STEPS="${WARMUP_STEPS:-2000}"
 CKPT_INTERVAL="${CKPT_INTERVAL:-5000}"
@@ -43,12 +47,62 @@ EVAL_INTERVAL="${EVAL_INTERVAL:-1000}"
 LAUNCH="torchrun --nproc_per_node=${GPUS}"
 TRAIN="scripts/train.py"
 EXTRACT="scripts/extract_hormones.py"
-COMMON="--size ${SIZE} --vocab_size ${VOCAB_SIZE}
+COMMON_BASE="--size ${SIZE} --vocab_size ${VOCAB_SIZE}
         --data ${DATA_DIR}/train --val_data ${DATA_DIR}/val
-        --micro_batch_size ${MICRO_BATCH} --grad_accum_steps ${GRAD_ACCUM}
         --seq_len ${SEQ_LEN} --warmup_steps ${WARMUP_STEPS}
         --ckpt_interval ${CKPT_INTERVAL} --log_interval ${LOG_INTERVAL}
         --eval_interval ${EVAL_INTERVAL}"
+
+# Fast variants: standard batch
+COMMON="${COMMON_BASE} --micro_batch_size ${MICRO_BATCH} --grad_accum_steps ${GRAD_ACCUM}"
+
+# Run an IA training command with fallback through IA_FALLBACK_CHAIN. Resumes
+# from any step checkpoint that was written before the crash.
+# Args: $1 = output dir; $@ = remaining train.py flags (without micro_batch/grad_accum/--out)
+run_ia_with_fallback() {
+    local out_dir="$1"; shift
+    local already_done="${out_dir}/ckpt_final.pt"
+    local stage1_done="${out_dir}/ckpt_milestone.pt"
+
+    # Already complete?
+    if [ -f "${already_done}" ] || [ -f "${stage1_done}" ]; then
+        # Caller will print the skip log
+        return 0
+    fi
+
+    for ATTEMPT in ${IA_FALLBACK_CHAIN}; do
+        local MB="${ATTEMPT%:*}"
+        local GA="${ATTEMPT#*:}"
+
+        # Find latest step checkpoint to resume from (if any, from a prior partial run)
+        local resume_arg=""
+        if [ -d "${out_dir}" ]; then
+            local latest=$(ls "${out_dir}/" 2>/dev/null | grep -oE 'ckpt_step[0-9]+\.pt' | sort -V | tail -1)
+            if [ -n "${latest}" ]; then
+                resume_arg="--resume ${out_dir}/${latest}"
+                echo "  ↻ resuming from ${latest}"
+            fi
+        fi
+
+        echo ""
+        echo "  ▶ trying micro_batch=${MB} grad_accum=${GA} (effective ≈ $((MB * GA * GPUS * SEQ_LEN)) tok/step)"
+        ${LAUNCH} ${TRAIN} ${COMMON_BASE} \
+            --micro_batch_size "${MB}" --grad_accum_steps "${GA}" \
+            "$@" \
+            ${resume_arg} \
+            --out "${out_dir}"
+
+        local rc=$?
+        if [ ${rc} -eq 0 ]; then
+            echo "  ✓ succeeded with micro_batch=${MB}"
+            return 0
+        fi
+        echo "  ✗ exit ${rc} at micro_batch=${MB}; falling back…"
+    done
+
+    echo "  ✗ ALL fallbacks exhausted for ${out_dir}"
+    return 1
+}
 
 mkdir -p "${RUNS_DIR}"
 
@@ -74,11 +128,10 @@ fi
 STAGE1_IA_DIR="${RUNS_DIR}/${SIZE}_ia_stage1"
 if [ ! -f "${STAGE1_IA_DIR}/ckpt_milestone.pt" ]; then
     log "STAGE 1 IA (intracellular scan, ${STAGE1_TOKENS} tokens) → ${STAGE1_IA_DIR}"
-    ${LAUNCH} ${TRAIN} ${COMMON} \
+    run_ia_with_fallback "${STAGE1_IA_DIR}" \
         --intra_attn \
         --tokens "${STAGE1_TOKENS}" \
-        --milestone_tokens "${STAGE1_TOKENS}" \
-        --out "${STAGE1_IA_DIR}"
+        --milestone_tokens "${STAGE1_TOKENS}"
 else
     log "STAGE 1 IA: checkpoint found, skipping → ${STAGE1_IA_DIR}/ckpt_milestone.pt"
 fi
@@ -137,14 +190,15 @@ else
 fi
 
 # ─── IA: continue Stage-1-IA for 3B more tokens (no hormones) ────────────────
+# (fallback fn auto-resumes from any in-progress step ckpt; if none exists it falls
+#  through to the caller-provided --resume below, i.e. the Stage-1 IA milestone.)
 IA_DIR="${RUNS_DIR}/${SIZE}_ia"
 if [ ! -f "${IA_DIR}/ckpt_final.pt" ]; then
     log "IA (${STAGE2_TOKENS} more tokens, intracellular attn) → ${IA_DIR}"
-    ${LAUNCH} ${TRAIN} ${COMMON} \
+    run_ia_with_fallback "${IA_DIR}" \
         --intra_attn \
         --tokens "${STAGE2_TOKENS}" \
-        --resume "${STAGE1_IA_DIR}/ckpt_milestone.pt" \
-        --out "${IA_DIR}"
+        --resume "${STAGE1_IA_DIR}/ckpt_milestone.pt"
 else
     log "IA: already done → ${IA_DIR}/ckpt_final.pt"
 fi
@@ -166,11 +220,10 @@ fi
 BOTH_DIR="${RUNS_DIR}/${SIZE}_both"
 if [ ! -f "${BOTH_DIR}/ckpt_final.pt" ]; then
     log "BOTH (${STAGE2_TOKENS} tokens, IA + hormone routing) → ${BOTH_DIR}"
-    ${LAUNCH} ${TRAIN} ${COMMON} \
+    run_ia_with_fallback "${BOTH_DIR}" \
         --intra_attn --hormones --hormone_path "${HORMONES_IA}" \
         --tokens "${STAGE2_TOKENS}" \
-        --resume "${STAGE1_IA_DIR}/ckpt_milestone.pt" \
-        --out "${BOTH_DIR}"
+        --resume "${STAGE1_IA_DIR}/ckpt_milestone.pt"
 else
     log "BOTH: already done → ${BOTH_DIR}/ckpt_final.pt"
 fi
