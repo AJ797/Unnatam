@@ -226,7 +226,23 @@ def eval_arc(model, tokenizer, device, subset: str = "ARC-Easy",
 def eval_piqa(model, tokenizer, device, max_examples: int | None = None,
               max_length: int = 1024) -> list[EvalResult]:
     from datasets import load_dataset
-    ds = load_dataset("ybisk/piqa", split="validation")
+    # ybisk/piqa is script-based and broken on datasets >= 4.0; try parquet mirrors.
+    ds = None
+    for repo in ("lighteval/piqa_helm", "tanganke/piqa", "baber/piqa"):
+        try:
+            ds = load_dataset(repo, split="validation")
+            print(f"[piqa] loaded from {repo}")
+            break
+        except Exception as e:
+            print(f"[piqa] {repo} failed: {type(e).__name__}: {str(e)[:120]}")
+    if ds is None:
+        # Last resort: trust_remote_code on the script-based original
+        try:
+            ds = load_dataset("ybisk/piqa", split="validation", trust_remote_code=True)
+            print("[piqa] loaded from ybisk/piqa via trust_remote_code")
+        except Exception as e:
+            print(f"[piqa] all mirrors failed; skipping. Last error: {e}")
+            return []
     if max_examples:
         ds = ds.select(range(min(max_examples, len(ds))))
     print(f"[piqa] {len(ds)} examples")
