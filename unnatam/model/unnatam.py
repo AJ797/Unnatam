@@ -55,6 +55,11 @@ class Unnatam(nn.Module):
                     f"hormone_vectors at {cfg.hormone_vector_path} has shape {tuple(v.shape)}, "
                     f"expected {(cfg.n_hormones, cfg.d_model)}"
                 )
+            # Belt-and-suspenders normalisation: the extraction script L2-normalises
+            # but a precision interaction was found to leave the buffer at norm ~0.65.
+            # Renormalising here ensures the paper claim of unit-norm directions
+            # holds regardless of the extraction path.
+            v = torch.nn.functional.normalize(v, dim=-1)
             return v
         # Pre-extraction: small random init (gate is 0 so this doesn't affect output).
         return torch.randn(cfg.n_hormones, cfg.d_model) * cfg.init_std

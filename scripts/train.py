@@ -144,6 +144,8 @@ def _build_model_config(args: argparse.Namespace) -> UnnatamConfig:
             cfg.hormone_vector_path = args.hormone_path
         # else: random small-magnitude init (gate=0 keeps it inert until extraction)
         cfg.hormone_fixed_gate = args.fixed_gate
+        cfg.hormone_router_init_gate = float(args.init_gate)
+        cfg.hormone_alpha = float(args.alpha)
 
     return cfg
 
@@ -229,6 +231,12 @@ def main() -> None:
                    help="use random unit-norm vectors instead of extracted (HR-rand ablation)")
     p.add_argument("--fixed_gate", action="store_true",
                    help="freeze hormone router gate at 1.0 — non-trainable (HR-fixedgate ablation)")
+    p.add_argument("--init_gate", type=float, default=0.0,
+                   help="initial value of hormone-router output gate (0.0 = no-op at init; "
+                        ">0 = warm start, the model feels the signal from step 0 — HR-forced)")
+    p.add_argument("--alpha", type=float, default=1.0,
+                   help="constant multiplier on the hormone injection (1.0 = baseline; "
+                        ">1.0 amplifies — used together with --init_gate for HR-forced)")
 
     # Dataloader
     p.add_argument("--num_workers", type=int, default=4,

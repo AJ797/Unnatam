@@ -49,6 +49,8 @@ class UnnatamConfig:
     hormone_random: bool = False           # True → random unit-norm vectors (HR-rand ablation)
     hormone_router_init_gate: float = 0.0   # init value of the output gate (0 → no-op at init)
     hormone_fixed_gate: bool = False       # True → gate frozen at 1.0, non-trainable (HR-fixedgate ablation)
+    hormone_alpha: float = 1.0             # multiplier on the injection magnitude (1.0 = baseline; >1.0 = HR-forced)
+    hormone_log_signal: bool = False       # if True, the model's forward returns ||injection|| / ||residual|| stats
 
     # Norm
     norm_eps: float = 1e-5

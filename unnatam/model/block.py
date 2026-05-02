@@ -64,6 +64,7 @@ class AttnLayer(nn.Module):
                 d_model=cfg.d_model,
                 n_hormones=cfg.n_hormones,
                 init_gate=cfg.hormone_router_init_gate,
+                alpha=cfg.hormone_alpha,
             )
             if cfg.use_hormones
             else None

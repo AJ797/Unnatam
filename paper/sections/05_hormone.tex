@@ -46,7 +46,7 @@ Stacking $\{v_i\}_{i=1}^{\nhormones}$ produces the hormone bank $V$.
 
 \subsection{Staged training schedule}
 
-Hormone routing is intended to act as a \emph{distillation of the base model's own emerging behavioural axes back into its training signal}. We therefore train in two stages.
+The mechanism is trained in two stages, with the hormone bank extracted from the partially-trained base model in between. The original motivation was to feed the base model's own emerging behavioural axes back into its training signal as an inductive prior on the residual stream; the empirical finding (Section~\ref{sec:experiments}) is that, at the scale we examine, the model develops the routing structure regardless of whether the bank is informative, while the gated injection's effect on the loss is bounded enough to be invisible. The staged schedule remains relevant for a different reason --- it is what allows the mechanism to remain benign --- but its rationale is now empirical rather than presumed.
 
 \textbf{Stage 1 (base pretraining).} The model is trained from random initialisation as a plain hybrid backbone. The hormone routing module is present in every attention layer, but the hormone bank $V$ is initialised to zero and frozen, so the module computes a zero shift regardless of router output. This stage is identical to training the unmodified hybrid baseline.
 
@@ -54,4 +54,4 @@ Hormone routing is intended to act as a \emph{distillation of the base model's o
 
 \textbf{Stage 2 (hormone-aware continuation).} Training resumes from the Stage~1 checkpoint with $V$ now set to the extracted directions. The routing weights, per-hormone magnitudes, and output gates are still randomly initialised (router) or zero (gate), so the hormone shift is again zero at the start of Stage~2 and grows only as the gates open. Because $V$ is frozen, the geometric meaning of each hormone direction is preserved through Stage~2; only the routing and gating behaviours evolve.
 
-A natural extension --- which we report in Section~\ref{sec:analysis} but do not adopt as our default --- is to re-extract the hormone bank multiple times during Stage~2, allowing the direction vectors themselves to track the model's evolving representations. Our experiments suggest this is helpful but not necessary for the routing layer to provide a measurable benefit.
+The schedule matters empirically. Section~\ref{sec:experiments} shows that introducing hormone routing as a continuation from a stabilised Stage-$1$ checkpoint is benign --- even with random or fixed-magnitude direction vectors --- while training from scratch with hormones in place from step $0$ (the \textsc{HR-noext} variant) actively degrades performance. We interpret the staged schedule as a precondition for the mechanism's bounded behaviour rather than a free hyperparameter.

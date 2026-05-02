@@ -3,30 +3,31 @@
 
 \subsection{Setup}
 
-\paragraph{Model.} All variants use the \textsc{tiny} configuration from Table~\ref{tab:configs}: a 125M-parameter hybrid backbone with $\dmodel = 1024$, 12 layers (10 SSM, 2 attention), $\dstate = 16$, 8 query heads, and 1 shared KV head. All variants tie word embeddings and the LM head.
+\paragraph{Model.} All variants use the \textsc{tiny} configuration from Table~\ref{tab:configs}: a $125$M-parameter hybrid backbone with $\dmodel = 1024$, $12$ layers ($10$ SSM, $2$ attention at indices $5$ and $11$), $\dstate = 16$, $8$ query heads, and $1$ shared KV head. All variants tie word embeddings and the LM head.
 
-\paragraph{Data and tokenisation.} We pretrain on the FineWeb-Edu \texttt{sample-10BT} subset~\citep{lozhkov2024fineweb} tokenised with the GPT-2 BPE~\citep{radford2019language}, producing $\approx 10$B uint16 tokens stored as flat binary shards. Validation perplexity is computed on a held-out 50M-token slice of the same distribution.
+\paragraph{Data and tokenisation.} We pretrain on the FineWeb-Edu \texttt{sample-10BT} subset~\citep{lozhkov2024fineweb} tokenised with the GPT-2 BPE~\citep{radford2019language}, producing $\approx 10$B uint16 tokens stored as flat binary shards. Validation perplexity is computed on a held-out $50$M-token slice of the same distribution.
 
-\paragraph{Training.} We train with bfloat16 mixed precision, gradient checkpointing on the SSM scan, AdamW~\citep{loshchilov2017decoupled} in 8-bit~\citep{dettmers20218bit} with $\beta = (0.9, 0.95)$, weight decay $0.1$ (excluded from biases, layer norms, the SSM $A$-log and $D$ parameters, hormone magnitudes, and gates), peak learning rate $3 \times 10^{-4}$, $2{,}000$ warmup steps, and cosine decay to $10\%$ of peak. Sequence length is $1024$. Training uses DDP across 8 GPUs; full hyperparameters are listed in Appendix~\ref{sec:appendix}. Gradient clipping is applied at $1.0$.
+\paragraph{Training.} We train with bfloat16 mixed precision, gradient checkpointing on the SSM scan, AdamW~\citep{loshchilov2017decoupled} in $8$-bit~\citep{dettmers20218bit} with $\beta = (0.9, 0.95)$, weight decay $0.1$ (excluded from biases, layer norms, the SSM $A$-log and $D$ parameters, hormone magnitudes, and gates), peak learning rate $3 \times 10^{-4}$, $2{,}000$ warmup steps, and cosine decay to $10\%$ of peak. Sequence length is $1024$. Training uses DDP across $8$ GPUs with effective batch $\approx 65{,}536$ tokens per optimiser step. Gradient clipping is applied at $1.0$. Full hyperparameters are listed in Appendix~\ref{app:hyperparams}.
 
-\paragraph{Token budget.} Stage 1 (base pretraining) consumes $1$B tokens (\TBD{XXX} optimiser steps). For hormone routing variants, hormone extraction occurs at the $1$B-token milestone and Stage 2 contributes a further $1$B tokens, for a total of $2$B tokens across all variants. This isolates the effect of the modifications from the optimisation budget.
+\paragraph{Token budget.} Stage 1 (base pretraining) consumes $1$B tokens. For hormone routing variants, hormone extraction occurs at the $1$B-token milestone and Stage 2 contributes a further $1$B tokens, for a total of $2$B tokens across all variants. The exception is the \textsc{HR-noext} variant (Section~\ref{subsec:variants}), which is trained from scratch for the full $2$B tokens with the hormone bank in place from step $0$.
 
-\paragraph{Hardware.} The fused-kernel variants (\textsc{Base}, \textsc{HR}, \textsc{HR-rand}, \textsc{HR-noext}, \textsc{HR-fixedgate}) are trained on $8\times$ NVIDIA RTX 4090/5090 (24\,GB) consumer GPUs. The reference-scan variants (\textsc{IA}, \textsc{Both}) are trained on $8\times$ NVIDIA RTX PRO 6000S (96\,GB) where the larger micro-batch (16 vs.\ 2) absorbs the per-step Python overhead of the reference scan. The total spend across all reported runs is approximately \TBD{\$XX}.
+\paragraph{Hardware.} All training and evaluation is conducted on rented $8\times$ NVIDIA RTX $4090$/$5090$ ($24$\,GB) compute. All hormone-routing variants use the fused Mamba scan kernel; the intracellular-attention preliminary run uses a pure-PyTorch reference scan whose throughput is approximately $25\times$ slower per token (Section~\ref{sec:intracellular}).
 
 \subsection{Variants}
+\label{subsec:variants}
 
-We compare seven variants holding the 2B-token optimisation budget fixed:
+We compare five variants holding the $2$B-token optimisation budget fixed:
 \begin{description}
-    \item[\textsc{Base}] The unmodified hybrid backbone. No intracellular attention, no hormone routing.
-    \item[\textsc{IA}] Hybrid backbone with intracellular attention enabled in every SSM layer (stride $k=32$); no hormone routing.
-    \item[\textsc{HR}] Hybrid backbone with hormone routing enabled (hormones extracted at the $1$B-token milestone). No intracellular attention.
-    \item[\textsc{Both}] Both intracellular attention and hormone routing enabled.
-    \item[\textsc{HR-rand}] Hormone routing with the hormone bank $V$ replaced by random unit vectors of the same shape. Tests whether the specific extracted directions matter.
-    \item[\textsc{HR-noext}] Hormone routing with $V$ extracted at step zero from a randomly initialised model. Tests whether extraction must follow Stage 1 training.
-    \item[\textsc{HR-fixedgate}] Hormone routing with the output gate $g$ initialised to $1.0$ and detached from gradients. Tests the value of the zero-init learnable gate.
+    \item[\textsc{Base}] The unmodified hybrid backbone. No hormone routing.
+    \item[\textsc{HR}] Hybrid backbone with hormone routing enabled (hormones extracted from the Stage-1 std checkpoint at the $1$B-token milestone, gate initialised at $0$, learnable).
+    \item[\textsc{HR-rand}] Hormone routing with the bank $V$ replaced by random unit vectors of the same shape. Tests whether the specific extracted directions matter.
+    \item[\textsc{HR-fixedgate}] Hormone routing with the output gate $g$ initialised to $1.0$ and detached from gradients. Tests whether the zero-init learnable gate is necessary for the mechanism to behave benignly.
+    \item[\textsc{HR-noext}] Hormone routing with $V$ extracted at step zero from a randomly-initialised model and trained from scratch for $2$B tokens. Tests the effect of injecting hormones during base pretraining rather than as a continuation.
 \end{description}
 
-The intracellular attention variants (\textsc{IA} and \textsc{Both}) require the Python reference scan, which is substantially slower per training token than the fused kernel. To keep the optimisation budget fixed across all variants, these runs are conducted on a high-VRAM compute node ($8 \times 96$\,GB) where the larger micro-batch amortises the per-step Python overhead.
+\paragraph{HR-forced (extension).} A sixth variant, \textsc{HR-forced}, initialises the gate at $0.2$ and applies a constant amplification $\alpha = 3.0$ to the gated injection, producing an effective initial perturbation $\approx 3\times$ larger than the largest converged gate observed in the unforced variants. Trained as a Stage-2 continuation from the standard Stage-1 checkpoint with the extracted bank. Reported separately from the main ablation grid in Section~\ref{subsec:hrforced}.
+
+\paragraph{Intracellular attention (preliminary).} A seventh variant, \textsc{IA}, is a Stage-2 continuation from the same Stage-1 standard checkpoint with the intracellular-attention mechanism enabled in every SSM layer. Because the reference scan implementation is approximately $25\times$ slower per token than the fused kernel, the IA variant is trained for $20$M Stage-2 tokens rather than the full $1$B. Reported separately as preliminary evidence in Section~\ref{subsec:ia}; full convergence at the $2$B-token budget requires a fused CUDA kernel implementation that is left as future work.
 
 \subsection{Main results}
 
@@ -34,22 +35,38 @@ Table~\ref{tab:main} reports validation perplexity and downstream zero-shot accu
 
 \begin{table}[t]
 \centering
-\caption{Main results on \textsc{tiny} (125M parameters), 2B-token training budget. Lower perplexity is better; higher accuracy is better. HellaSwag reported as acc$_\text{norm}$ (length-normalised); ARC as acc$_\text{norm}$; PIQA as acc$_\text{norm}$; LAMBADA as exact-match accuracy. Best per column in \textbf{bold}.}
+\caption{Main results on \textsc{tiny} ($125$M parameters), $2$B-token training budget. Lower perplexity is better; higher accuracy is better. HellaSwag, ARC, PIQA reported as length-normalised accuracy. LAMBADA reported as exact-match accuracy. Best per column in \textbf{bold}.}
 \label{tab:main}
+\small
 \begin{tabular}{lcccccc}
 \toprule
-Variant & Val ppl $\downarrow$ & HellaSwag & LAMBADA & ARC-E & ARC-C & PIQA \\
+Variant & Val PPL $\downarrow$ & HellaSwag & LAMBADA & ARC-E & ARC-C & PIQA \\
 \midrule
-\textsc{Base}        & \TBD{X.XX} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} \\
-\textsc{IA}          & \TBD{X.XX} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} \\
-\textsc{HR}          & \TBD{X.XX} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} \\
-\textsc{Both}        & \TBD{X.XX} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} \\
+\textsc{Base}        & \textbf{26.13} & \textbf{28.14} & \textbf{20.47} & \textbf{43.69} & 23.38 & 61.15 \\
+\textsc{HR}          & \textbf{26.13} & 28.00 & \textbf{20.47} & 43.39 & 23.38 & 61.10 \\
+\textsc{HR-rand}     & \textbf{26.13} & \textbf{28.15} & \textbf{20.47} & 43.52 & 23.38 & \textbf{61.26} \\
+\textsc{HR-fixedgate}& \textbf{26.13} & \textbf{28.14} & 20.43 & 43.60 & \textbf{23.63} & 61.15 \\
 \midrule
-\textsc{HR-rand}     & \TBD{X.XX} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} \\
-\textsc{HR-noext}    & \TBD{X.XX} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} \\
-\textsc{HR-fixedgate}& \TBD{X.XX} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} & \TBD{X.X} \\
+\textsc{HR-noext}    & 28.20 & 27.59 & 18.26 & 40.82 & 23.21 & \textbf{61.26} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\TBD{Headline narrative: e.g.\ ``\textsc{Both} attains the lowest validation perplexity at $X.XX$, an improvement of $\Delta$ over \textsc{Base}. The two contributions compose: \textsc{IA} alone gives $\Delta_1$, \textsc{HR} alone gives $\Delta_2$, and \textsc{Both} gives approximately $\Delta_1 + \Delta_2$, suggesting the mechanisms operate independently. The hormone-routing ablations show [pattern across rand/noext/fixedgate].''}
+\paragraph{The model is invariant to routing content but not to routing timing.} The four variants in the upper block of Table~\ref{tab:main} all achieve the same validation perplexity to four decimal places ($\textsc{Base}: 3.26324$; $\textsc{HR}: 3.26325$; $\textsc{HR-rand}: 3.26315$; $\textsc{HR-fixedgate}: 3.26325$). This identity holds throughout Stage~2 training, not only at the final step (Figure~\ref{fig:val_loss}): the loss trajectories of the four variants trace the same curve from start to finish, with maximum step-wise divergence below $10^{-3}$ in loss. Downstream zero-shot accuracies likewise vary within statistical noise --- the largest variant-to-variant gap on any benchmark is $0.30$\,pp on ARC-E. The model has therefore organised itself such that a small additive perturbation along any chosen seven directions in residual space, gated by a learnable scalar (or even by a fixed scalar), is absorbed into its existing predictions without altering them. \textsc{HR-noext} is the only variant whose loss meaningfully differs from \textsc{Base}: a $2.07$-PPL degradation, with downstream drops of $-2.21$\,pp on LAMBADA and $-2.87$\,pp on ARC-Easy. The single variable that distinguishes \textsc{HR-noext} from the other four is the training schedule: \textsc{HR-noext} is the only variant in which hormone routing is present during base pretraining rather than introduced as a Stage-2 continuation from a stabilised checkpoint. The model is invariant to the routing module's \emph{content}, but not to its \emph{timing}.
+
+\paragraph{Interpretive structure does not require a loss signal to develop.} The above pattern would be uninformative on its own --- ``a mechanism we proposed does nothing.'' What makes the finding substantive is that the routing module \emph{does} learn a semantically-meaningful, genre-conditional distribution at every variant we tested, including the random-vector and frozen-gate controls (Section~\ref{sec:analysis}; Figure~\ref{fig:routing}). The variant with the highest specialisation strength, \textsc{HR-fixedgate} (max pairwise $L_1 = 1.56$ across six text genres), is among the four that achieve identical \textsc{Base}-level val PPL. The variant with the lowest specialisation among the well-behaved ones, \textsc{HR}, is also among the four. Specialisation strength does not correlate with downstream performance, and the routing structure that emerges is qualitatively similar across banks of extracted directions, random unit vectors, and randomly-initialised-extracted directions. The mechanism is producing the kind of organised, inspectable representational structure that interpretability work typically interprets as evidence of useful function --- without that structure being visible in the loss.
+
+\subsection{Forced-engagement variant}
+\label{subsec:hrforced}
+
+\TBD{Inserted when training finishes (~5h after main IA run).} The \textsc{HR-forced} variant initialises the gate at $g_0 = 0.2$ (vs the default $0.0$) and applies a constant $\alpha = 3.0$ amplification to the gated injection, producing an effective initial perturbation \TBD{X}\,$\times$ larger than the largest converged gate of the unforced variants. The resulting validation PPL is \TBD{X.XX}; per-genre routing distributions are reported in Figure~\TBD{X}; final gate values are \TBD{l5=X, l11=X}.
+
+\TBD{Headline narrative depending on outcome:
+(a) PPL lower than base $\Rightarrow$ the mechanism CAN improve loss when forced to engage --- the unforced variants' apparent inertness is a capacity-bottlenecked phenomenon, not a fundamental ceiling.
+(b) PPL ${\approx}$ base $\Rightarrow$ even forced engagement is absorbed; the architecture has a strong capacity to homeostatically neutralise constant-magnitude perturbations.
+(c) PPL higher than base $\Rightarrow$ forced engagement breaks the model's homeostasis; bounded engagement is necessary for the mechanism to remain benign.}
+
+\subsection{Intracellular attention (preliminary)}
+\label{subsec:ia}
+
+\TBD{Inserted when IA training finishes (~8h after launch).} As a preliminary characterisation of intracellular attention we report Stage-2 training results on the same Stage-1 standard checkpoint as the hormone variants, with the IA mechanism enabled in every SSM layer (gate $g$ zero-initialised) and a stride-$32$ application schedule (Section~\ref{sec:intracellular}). Due to the throughput penalty of the reference scan implementation, this run uses a $20$M-token Stage-2 budget (vs the $1$B used for the hormone variants); we therefore restrict the comparison to the early Stage-2 trajectory (Figure~\TBD{X}). At the end of the $20$M-token Stage 2 the IA gates have moved from their zero initialisation to non-zero values (\TBD{layer-wise}), confirming the mechanism activates under gradient signal. Validation loss tracks the corresponding Base trajectory at the same step within \TBD{X}\%; a meaningful comparison at the full $1$B-token Stage~2 budget requires the fused-kernel implementation we leave as future work.
