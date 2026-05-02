@@ -133,6 +133,7 @@ def _build_model_config(args: argparse.Namespace) -> UnnatamConfig:
 
     # Intracellular attention
     cfg.use_intra_attn = args.intra_attn
+    cfg.ia_stride = args.ia_stride
 
     # Hormone routing
     cfg.use_hormones = args.hormones
@@ -216,6 +217,8 @@ def main() -> None:
     # Architecture flags
     p.add_argument("--intra_attn", action="store_true",
                    help="enable intracellular attention in SSM blocks (forces ref scan)")
+    p.add_argument("--ia_stride", type=int, default=32,
+                   help="apply intracellular attention every K scan steps (1=every step, default 32)")
 
     # Hormone variant flags
     p.add_argument("--hormones", action="store_true",
@@ -291,7 +294,8 @@ def main() -> None:
         print(f"[unnatam] world_size={world_size} device={device}")
         print(f"[unnatam] tokens_per_step={tokens_per_step:,} total_steps={total_steps:,} "
               f"total_tokens={total_tokens/1e9:.2f}B")
-        print(f"[unnatam] hormones={args.hormones} intra_attn={args.intra_attn} "
+        ia_str = f"intra_attn=True (stride={args.ia_stride})" if args.intra_attn else "intra_attn=False"
+        print(f"[unnatam] hormones={args.hormones} {ia_str} "
               f"rand_hormones={args.rand_hormones} fixed_gate={args.fixed_gate}")
 
     model = Unnatam(cfg)

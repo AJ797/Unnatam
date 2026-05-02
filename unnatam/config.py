@@ -40,6 +40,7 @@ class UnnatamConfig:
     # Intracellular attention (slot attention inside SSM state at each scan step)
     use_intra_attn: bool = False
     intra_attn_dim: int | None = None   # None = auto = d_state (keeps it tiny by default)
+    ia_stride: int = 32                  # apply IA every K scan steps (1 = every step)
 
     # Hormone routing (injected after each Attention block's residual)
     use_hormones: bool = True              # False → no HormoneRouter, saves params for Base/IA variants

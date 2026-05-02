@@ -108,6 +108,7 @@ def selective_scan_ref(
     C: torch.Tensor,                            # (B, L, d_state)
     D: torch.Tensor,                            # (d_inner,)
     intra_attn: "IntraCellularAttention | None" = None,
+    ia_stride: int = 32,
 ) -> torch.Tensor:
     """Reference selective scan in pure PyTorch.
 
@@ -118,9 +119,11 @@ def selective_scan_ref(
     inner state update loop).
 
     When intra_attn is provided, the SSM state h_t is passed through
-    IntraCellularAttention after every state update and before the linear
-    readout.  This lets the d_state slots attend to each other in a
-    content-dependent way — see IntraCellularAttention for details.
+    IntraCellularAttention after every ``ia_stride`` state updates (default 32)
+    rather than every step. This preserves the slot-interaction inductive bias
+    while reducing the number of intra-attention calls per layer-scan from L
+    (=1024 by default) to L/stride (=32), keeping the mechanism tractable under
+    our compute budget. Setting ``ia_stride=1`` recovers per-step IA.
     """
     B_, L, d_inner = u.shape
     d_state = A.shape[1]
@@ -132,8 +135,11 @@ def selective_scan_ref(
     ys = []
     for t in range(L):
         h = deltaA[:, t] * h + deltaB_u[:, t]
-        if intra_attn is not None:
-            h = intra_attn(h)                                            # slot attention before readout
+        # Fire IA every ia_stride steps and always on the last step (so the
+        # final readout sees slot interaction, and short test sequences still
+        # exercise the IA path).
+        if intra_attn is not None and (((t + 1) % ia_stride == 0) or t == L - 1):
+            h = intra_attn(h)
         ys.append((h * C[:, t].unsqueeze(1)).sum(dim=-1))                # (B, d_inner)
     y = torch.stack(ys, dim=1)                                           # (B, L, d_inner)
     return y + u * D
@@ -154,6 +160,7 @@ class MambaBlock(nn.Module):
         dt_init_floor: float = 1e-4,
         use_intra_attn: bool = False,
         intra_attn_dim: int | None = None,
+        ia_stride: int = 32,
     ):
         super().__init__()
         self.d_model = d_model
@@ -202,10 +209,13 @@ class MambaBlock(nn.Module):
 
         # Intracellular attention: slot attention inside the scan loop.
         # When active, forces the ref scan path (fast kernel unsupported).
+        # ia_stride controls how often IA is applied within the scan; default 32
+        # reduces IA calls per layer-scan from L to L/stride for tractability.
         self.intra_attn: IntraCellularAttention | None = (
             IntraCellularAttention(self.d_inner, d_state, intra_attn_dim)
             if use_intra_attn else None
         )
+        self.ia_stride: int = ia_stride
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # x: (B, T, d_model)
@@ -230,7 +240,10 @@ class MambaBlock(nn.Module):
             or not (_HAS_MAMBA_SSM and x_act.is_cuda)
         )
         if use_ref:
-            y = selective_scan_ref(x_act, dt, A, B_in, C_in, self.D, intra_attn=self.intra_attn)
+            y = selective_scan_ref(
+                x_act, dt, A, B_in, C_in, self.D,
+                intra_attn=self.intra_attn, ia_stride=self.ia_stride,
+            )
         else:
             y = selective_scan_fast(x_act, dt, A, B_in, C_in, self.D)
 
