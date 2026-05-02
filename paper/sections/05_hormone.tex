@@ -25,7 +25,7 @@ This decouples the geometric direction of each hormone (kept frozen and unit-nor
 \end{equation}
 where $g \in \mathbb{R}$ is a single scalar gate, initialised to zero, multiplied uniformly across all tokens and all hormones. At initialisation $\Delta h \equiv 0$ and the model is exactly the vanilla hybrid backbone; the gate is excluded from weight decay so that early-training gradients can drive it freely. The hormone shift is added to the residual stream after the MLP residual addition (Section~\ref{sec:arch}).
 
-\paragraph{Total parameter cost.} Per attention layer: $\nhormones \dmodel + \nhormones + 1$ parameters (router, magnitudes, gate). The hormone bank $V$ itself is shared across all attention layers, contributing $\nhormones \dmodel$ non-trainable parameters once. For \textsc{small} ($\dmodel = 1536$, $\nhormones = 7$, three attention layers): $\approx 32{,}000$ trainable parameters total, under $0.01\%$ of model parameters.
+\paragraph{Total parameter cost.} Per attention layer: $\nhormones \dmodel + \nhormones + 1$ parameters (router, magnitudes, gate). The hormone bank $V$ itself is shared across all attention layers, contributing $\nhormones \dmodel$ non-trainable parameters once. For \textsc{tiny} ($\dmodel = 1024$, $\nhormones = 7$, two attention layers): $2 \times (7 \times 1024 + 7 + 1) = 14{,}352$ trainable parameters total, roughly $0.01\%$ of model parameters.
 
 \subsection{Document-style contrast-pair extraction}
 \label{subsec:extraction}

@@ -32,14 +32,14 @@ Algorithm~\ref{alg:scan} gives the modified reference selective scan. Lines high
 \caption{Selective scan with intracellular attention.}
 \label{alg:scan}
 \begin{algorithmic}[1]
-\Require Input $u \in \mathbb{R}^{B \times L \times \dinner}$, time-step $\Delta \in \mathbb{R}^{B \times L \times \dinner}$, state $A \in \mathbb{R}^{\dinner \times \dstate}$, input matrix $B \in \mathbb{R}^{B \times L \times \dstate}$, readout $C \in \mathbb{R}^{B \times L \times \dstate}$, skip $D \in \mathbb{R}^{\dinner}$, intracellular attention module $\mathcal{A}$ (optional)
+\Require Input $u \in \mathbb{R}^{B \times L \times \dinner}$, time-step $\Delta \in \mathbb{R}^{B \times L \times \dinner}$, state $A \in \mathbb{R}^{\dinner \times \dstate}$, input matrix $B \in \mathbb{R}^{B \times L \times \dstate}$, readout $C \in \mathbb{R}^{B \times L \times \dstate}$, skip $D \in \mathbb{R}^{\dinner}$, intracellular attention module $\mathcal{A}$ (optional), stride $k$ (apply $\mathcal{A}$ every $k$ steps)
 \State $h \gets \mathbf{0} \in \mathbb{R}^{B \times \dinner \times \dstate}$
 \State $\bar A \gets \exp(\Delta_{:,:,:,\text{None}} \odot A)$ \Comment{$(B, L, \dinner, \dstate)$}
 \State $\bar B u \gets \Delta_{:,:,:,\text{None}} \odot B_{:,:,\text{None},:} \odot u_{:,:,:,\text{None}}$ \Comment{$(B, L, \dinner, \dstate)$}
 \For{$t = 1, \ldots, L$}
     \State $h \gets \bar A_t \odot h + \bar B u_t$
-    \If{$\mathcal{A}$ is provided}
-        \State $h \gets \mathcal{A}(h)$ \Comment{intracellular attention}
+    \If{$\mathcal{A}$ is provided \textbf{and} ($t \bmod k = 0$ \textbf{or} $t = L$)}
+        \State $h \gets \mathcal{A}(h)$ \Comment{strided intracellular attention; always fires at final step}
     \EndIf
     \State $y_t \gets \sum_{s} h_{:, :, s} \odot C_{:, t, s}$
 \EndFor
@@ -50,11 +50,11 @@ Algorithm~\ref{alg:scan} gives the modified reference selective scan. Lines high
 \section{Training Hyperparameters}
 \label{app:hyperparams}
 
-Table~\ref{tab:hparams} lists the full hyperparameter set used for the main \textsc{small} runs.
+Table~\ref{tab:hparams} lists the full hyperparameter set used for the main \textsc{tiny} runs.
 
 \begin{table}[h]
 \centering
-\caption{Hyperparameters for \textsc{small} runs.}
+\caption{Hyperparameters for \textsc{tiny} (125M) runs.}
 \label{tab:hparams}
 \begin{tabular}{ll}
 \toprule
@@ -62,7 +62,7 @@ Hyperparameter & Value \\
 \midrule
 Vocabulary size            & 50{,}257 (GPT-2 BPE) \\
 Sequence length            & 1024 \\
-Effective batch (tokens)   & $\approx$ 32{,}000 \\
+Effective batch (tokens)   & \TBD{$\approx$ XXK} \\
 Optimiser                  & AdamW 8-bit \\
 $\beta_1, \beta_2$         & $(0.9, 0.95)$ \\
 $\epsilon$                 & $10^{-8}$ \\
@@ -74,8 +74,9 @@ Weight decay               & 0.1 \\
 Gradient clip              & 1.0 \\
 Mixed precision            & bfloat16 \\
 Gradient checkpointing     & enabled (SSM scan) \\
-Total training tokens      & 4B \\
+Total training tokens      & 2B \\
 Hormone extraction step    & 1B tokens \\
+GPUs                       & 8$\times$ NVIDIA RTX 4090 / RTX 5090 \\
 \bottomrule
 \end{tabular}
 \end{table}

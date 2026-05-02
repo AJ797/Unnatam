@@ -17,7 +17,7 @@ x &\leftarrow x + \text{MLP}(\text{RMSNorm}(x)),\\
 x &\leftarrow x + \text{Hormone}(x).
 \end{align}
 
-\paragraph{Configuration ranges.} We work primarily with a 350M-parameter configuration ($\dmodel = 1536$, $L = 18$, $\dinner = 3072$, $\dstate = 16$, $\dattn = 16$, twelve query heads, one shared KV head, head dim $128$); a 125M tiny variant for fast ablation; and a 770M medium variant. Layer counts and widths for each configuration are summarised in Table~\ref{tab:configs}.
+\paragraph{Configuration ranges.} All experiments in this paper use the \textsc{tiny} configuration ($\dmodel = 1024$, $L = 12$, $\dinner = 2048$, $\dstate = 16$, eight query heads, one shared KV head, head dim $128$, $\approx 125$M parameters), which admits full ablation within a 2B-token budget on consumer-grade hardware. A 350M-parameter \textsc{small} and a 770M-parameter \textsc{medium} variant are also defined for future scaling experiments. Layer counts and widths for each configuration are summarised in Table~\ref{tab:configs}.
 
 \begin{table}[t]
 \centering

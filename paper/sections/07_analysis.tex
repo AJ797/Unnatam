@@ -11,17 +11,13 @@ We probe the trained \textsc{HR} model by recording, for each token in a held-ou
 
 \subsection{What does intracellular attention learn?}
 
-For the trained \textsc{IA} model, we record the slot-to-slot attention pattern $\alpha_t \in \mathbb{R}^{\dstate \times \dstate}$ at each scan step, averaged over the validation set. We plot the average attention pattern at three depths (early, middle, late SSM layer). \TBD{Narrative: do early layers diffuse uniformly across slots, while late layers exhibit a sparse pattern? Is the gate $g$ open at all layers or only some?}
+For the trained \textsc{IA} model, we record the slot-to-slot attention pattern $\alpha_t \in \mathbb{R}^{\dstate \times \dstate}$ at each scan step on which intracellular attention fires, averaged over the validation set. We plot the average attention pattern at three depths (early, middle, late SSM layer). \TBD{Narrative: do early layers diffuse uniformly across slots, while late layers exhibit a sparse pattern? Is the gate $g$ open at all layers or only some?}
 
 \paragraph{Slot-pair specialisation.} If intracellular attention is doing useful work, we expect specific slot pairs to attend to one another consistently across inputs. Figure~\TBD{W} reports the entropy of $\alpha_t$ averaged across positions, layers, and inputs. \TBD{Narrative: lower entropy than uniform indicates the mechanism has chosen specific slot interactions.}
 
-\subsection{Re-extraction at later milestones}
-
-As an extension we re-extract the hormone bank at the $2$B-token milestone (mid Stage 2) and $3$B-token milestone (end of training), each time replacing $V$ in place. Table~\TBD{T} reports validation perplexity for the variants \textsc{HR-1B} (default), \textsc{HR-1B-2B} (re-extracted once), and \textsc{HR-1B-2B-3B} (re-extracted twice). \TBD{Narrative: does the model benefit from updated direction vectors? If so, by how much, and is the benefit cost-effective?}
-
 \subsection{Limitations}
 
-\paragraph{Scale.} Our experiments are at the 350M-parameter scale on a 4B-token budget. While these are sufficient to observe statistically meaningful differences between variants, scaling laws~\citep{hoffmann2022training} predict that the relative impact of architectural modifications can change with model size. We cannot rule out that the contributions reported here either grow or shrink in importance at larger scale.
+\paragraph{Scale.} Our experiments are at the 125M-parameter scale on a 2B-token budget. While these are sufficient to observe statistically meaningful differences between variants, scaling laws~\citep{hoffmann2022training} predict that the relative impact of architectural modifications can change with model size. We cannot rule out that the contributions reported here either grow or shrink in importance at larger scale.
 
 \paragraph{Pretraining-only.} We do not perform supervised fine-tuning or RLHF. The hormone routing mechanism is in principle compatible with these stages --- the routing weights and magnitudes can be further updated, and re-extraction can target newly-relevant behavioural axes --- but we leave that investigation to future work.
 

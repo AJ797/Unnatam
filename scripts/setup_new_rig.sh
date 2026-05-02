@@ -32,11 +32,8 @@ echo "================================================"
 source /venv/main/bin/activate
 cd /workspace
 if [ ! -d "Unnatam" ]; then
-    echo "Cloning Unnatam..."
-    echo "EDIT THIS LINE with your actual repo URL"
-    # git clone https://github.com/YOUR_USER/Unnatam.git
-    echo "ABORTING — please edit setup_new_rig.sh with your git clone URL"
-    exit 1
+    echo "Cloning Unnatam from github.com/AJ797/Unnatam..."
+    git clone https://github.com/AJ797/Unnatam.git
 fi
 cd /workspace/Unnatam
 pip install -e .
