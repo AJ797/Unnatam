@@ -1,27 +1,32 @@
 #!/usr/bin/env bash
-# Tight IA training plan to fit the NeurIPS deadline.
+# MVP IA training run for the NeurIPS submission.
+#
+# Goal: minimal viable evidence that intracellular attention (a) trains stably,
+# (b) opens its gate, and (c) tracks or beats the Base loss curve at the same
+# Stage-2 step. Cost-budgeted at ~$30-90 of GPU time.
 #
 # Strategy:
 #   - Reuse the existing Stage-1 standard checkpoint (1B tokens, no IA).
-#     The IA gate is zero-init, so attaching IA to the existing checkpoint is
-#     mathematically a no-op at initialisation; the gate opens during Stage 2.
-#     This saves ~3 days of redundant Stage-1 training.
-#   - Reuse the existing extracted hormones (tiny_hormones.npy) for `Both`.
-#   - Stage 2 IA and Stage 2 Both each train for 500M tokens (vs 1B for HR
-#     variants). This is a known asymmetry — see paper footnote.
+#     The IA gate is zero-init, so attaching IA to the Stage-1 std checkpoint
+#     is mathematically a no-op at initialisation; the gate opens during Stage 2.
+#     This avoids ~3 days of redundant Stage-1 training.
+#   - Train ONLY the IA variant (no `Both`).
+#   - 50M Stage-2 tokens — enough for 2-3 eval intervals to plot a trend.
 #
-# Token budgets:
-#   - Base / HR / HR-rand / HR-noext / HR-fixedgate: 2B (1B Stage 1 + 1B Stage 2)
-#   - IA / Both: 1.5B (1B Stage 1 std + 500M Stage 2 with IA)
+# Comparison: existing tiny_base/train.jsonl already logs val loss every
+# eval_interval steps from the same Stage-1 ckpt. Plot IA vs Base val loss at
+# matching step counts (no separate Base re-run needed).
 #
 # Wall-clock estimate on 8× RTX PRO 6000S 96GB:
-#   - Stage 2 IA   (500M): ~1.5 days (8 GPUs, mb=16, ia_stride=32)
-#   - Stage 2 Both (500M): ~1.5 days (8 GPUs, mb=16, ia_stride=32)
-#   - Total: ~3 days sequential
+#   - 50M tokens at ~4000 tok/s ≈ 3.5h ≈ $32 at $9/hr
+#   - if throughput is closer to 1500 tok/s, ≈ 9h ≈ $80
+#
+# Run a throughput smoke test first (--tokens 5M) before committing to 50M.
 #
 # Usage:
-#   bash scripts/run_ia_full.sh
-#   STAGE2_TOKENS=500M MICRO_BATCH=16 IA_STRIDE=32 bash scripts/run_ia_full.sh
+#   bash scripts/run_ia_full.sh                       # 50M IA training
+#   STAGE2_TOKENS=5M bash scripts/run_ia_full.sh      # smoke test only
+#   STAGE2_TOKENS=100M bash scripts/run_ia_full.sh    # bumped budget
 
 set -e
 source /venv/main/bin/activate
@@ -31,30 +36,24 @@ cd /workspace/Unnatam
 DATA_DIR="${DATA_DIR:-/workspace/data/fineweb}"
 RUNS_DIR="${RUNS_DIR:-/workspace/runs}"
 GPUS="${GPUS:-8}"
-STAGE2_TOKENS="${STAGE2_TOKENS:-500M}"
+STAGE2_TOKENS="${STAGE2_TOKENS:-50M}"
 MICRO_BATCH="${MICRO_BATCH:-16}"   # 96GB VRAM lets us use much bigger batches
 GRAD_ACCUM="${GRAD_ACCUM:-1}"
 IA_STRIDE="${IA_STRIDE:-32}"
-WARMUP="${WARMUP:-1000}"           # shorter warmup for the shorter Stage 2
-CKPT_INTERVAL="${CKPT_INTERVAL:-2000}"
-LOG_INTERVAL="${LOG_INTERVAL:-50}"
-EVAL_INTERVAL="${EVAL_INTERVAL:-1000}"
+WARMUP="${WARMUP:-200}"            # short warmup for the small Stage 2
+CKPT_INTERVAL="${CKPT_INTERVAL:-500}"
+LOG_INTERVAL="${LOG_INTERVAL:-25}"
+EVAL_INTERVAL="${EVAL_INTERVAL:-200}"
 # ──────────────────────────────────────────────────────────────────────────────
 
-# Reused artefacts from the original ablation run
+# Reused artefact from the original ablation run
 STAGE1_STD="${RUNS_DIR}/tiny_stage1/ckpt_milestone.pt"
-HORMONES_STD="${RUNS_DIR}/tiny_hormones.npy"
 
 # Sanity check
 if [ ! -f "${STAGE1_STD}" ]; then
     echo "ERROR: missing Stage-1 checkpoint at ${STAGE1_STD}"
-    echo "  This script assumes /workspace/runs/tiny_stage1/ckpt_milestone.pt exists"
-    echo "  (transferred from the previous rig). Run the rsync from your old rig first."
-    exit 1
-fi
-if [ ! -f "${HORMONES_STD}" ]; then
-    echo "ERROR: missing hormones bank at ${HORMONES_STD}"
-    echo "  Transfer /workspace/runs/tiny_hormones.npy from your previous rig."
+    echo "  This script reuses the Stage-1 std checkpoint from the original ablation run."
+    echo "  Confirm the workspace was copied correctly from the previous rig."
     exit 1
 fi
 
@@ -73,10 +72,9 @@ log() { echo ""; echo "═══════════════════
 EFF=$((MICRO_BATCH * GRAD_ACCUM * GPUS * 1024))
 echo "Effective batch per opt step: ${EFF} tokens (mb=${MICRO_BATCH} ga=${GRAD_ACCUM} gpus=${GPUS} seq=1024)"
 echo "Stage 2 budget: ${STAGE2_TOKENS} (Stage 1 std reused: ${STAGE1_STD})"
-echo "Hormones bank reused: ${HORMONES_STD}"
 
 # =============================================================================
-# Step 1 — IA: continue from Stage-1 std with IA enabled (gate zero-init)
+# IA: continue from Stage-1 std with IA enabled (gate zero-init)
 # =============================================================================
 IA_DIR="${RUNS_DIR}/tiny_ia"
 if [ ! -f "${IA_DIR}/ckpt_final.pt" ]; then
@@ -91,37 +89,21 @@ else
 fi
 
 # =============================================================================
-# Step 2 — Both: continue from Stage-1 std with IA + extracted hormones
-# =============================================================================
-BOTH_DIR="${RUNS_DIR}/tiny_both"
-if [ ! -f "${BOTH_DIR}/ckpt_final.pt" ]; then
-    log "Both Stage-2 (continuation from Stage-1 std, IA + hormone routing)"
-    ${LAUNCH} scripts/train.py ${COMMON} \
-        --intra_attn --ia_stride ${IA_STRIDE} \
-        --hormones --hormone_path "${HORMONES_STD}" \
-        --tokens "${STAGE2_TOKENS}" \
-        --resume "${STAGE1_STD}" \
-        --out "${BOTH_DIR}"
-else
-    log "Both Stage-2: ckpt_final.pt found, skipping"
-fi
-
-# =============================================================================
 # Done
 # =============================================================================
-log "ALL IA TRAINING DONE"
-for d in tiny_ia tiny_both; do
-    if [ -f "${RUNS_DIR}/${d}/ckpt_final.pt" ]; then
-        v=$(grep -oP '"val_loss":\s*\K[\d.]+' ${RUNS_DIR}/${d}/train.jsonl 2>/dev/null | tail -1)
-        echo "  ✓ ${d}  final val_loss=${v}"
-    else
-        echo "  ✗ ${d}  MISSING"
-    fi
-done
+log "IA TRAINING DONE"
+if [ -f "${IA_DIR}/ckpt_final.pt" ]; then
+    v=$(grep -oP '"val_loss":\s*\K[\d.]+' ${IA_DIR}/train.jsonl 2>/dev/null | tail -1)
+    echo "  ✓ tiny_ia  final val_loss=${v}"
+else
+    echo "  ✗ tiny_ia  MISSING"
+fi
 
 echo ""
-echo "Next: run evals on the new IA + Both checkpoints"
-echo "  Update VARIANTS array in scripts/run_all_evals_parallel.sh to include:"
-echo "    \"tiny_ia:0:1\""
-echo "    \"tiny_both:1:1\""
-echo "  then: bash scripts/run_all_evals_parallel.sh"
+echo "Next steps:"
+echo "  1. Inspect IA gates:        bash scripts/inspect_ia_gates.sh"
+echo "  2. Compare val loss curves: bash scripts/compare_ia_vs_base.sh"
+echo "  3. Run zero-shot evals:     CUDA_VISIBLE_DEVICES=0 python3 scripts/run_evals.py \\"
+echo "                                 --ckpt ${IA_DIR}/ckpt_final.pt --size tiny \\"
+echo "                                 --vocab_size 50257 --use_intra_attn \\"
+echo "                                 --out ${IA_DIR}/evals.json"
