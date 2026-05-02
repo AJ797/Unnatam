@@ -227,6 +227,10 @@ def main() -> None:
     p.add_argument("--fixed_gate", action="store_true",
                    help="freeze hormone router gate at 1.0 — non-trainable (HR-fixedgate ablation)")
 
+    # Dataloader
+    p.add_argument("--num_workers", type=int, default=4,
+                   help="dataloader workers per rank (auto-clamped to cpu_count/world_size)")
+
     # Memory
     p.add_argument("--no_grad_ckpt", action="store_true")
     p.add_argument("--no_8bit_adam", action="store_true",
@@ -307,13 +311,24 @@ def main() -> None:
     # -----------------------------------------------------------------------
     train_dataset = _build_dataset(args, cfg, rank, world_size)
     val_dataset = _build_val_dataset(args, cfg)
+
+    # Per-rank num_workers: aim for ~4-8 workers per rank but never more
+    # than (cpu_count // world_size) so we don't over-subscribe.
+    cpu_count = os.cpu_count() or 8
+    per_rank_workers = max(1, min(args.num_workers, cpu_count // max(1, world_size)))
+    if is_main:
+        print(f"[unnatam] dataloader: num_workers={per_rank_workers} per rank "
+              f"(cpu_count={cpu_count}, world_size={world_size})")
+
     train_loader = build_dataloader(
         train_dataset, batch_size=args.micro_batch_size,
-        num_workers=2, pin_memory=(device != "cpu"),
+        num_workers=per_rank_workers, pin_memory=(device != "cpu"),
+        persistent_workers=True, prefetch_factor=4,
     )
     val_loader = (
         build_dataloader(val_dataset, batch_size=args.micro_batch_size,
-                         num_workers=1, pin_memory=(device != "cpu"))
+                         num_workers=1, pin_memory=(device != "cpu"),
+                         persistent_workers=True, prefetch_factor=2)
         if val_dataset is not None else None
     )
 

@@ -82,11 +82,24 @@ def build_dataloader(
     batch_size: int,
     num_workers: int = 0,
     pin_memory: bool = True,
+    prefetch_factor: int | None = None,
+    persistent_workers: bool | None = None,
 ) -> DataLoader:
-    return DataLoader(
-        dataset,
-        batch_size=batch_size,
-        num_workers=num_workers,
-        pin_memory=pin_memory,
-        drop_last=True,
-    )
+    """Build a DataLoader. With num_workers >= 1 we keep workers alive across
+    iterator restarts (important for our ``_infinite()`` train wrapper) and
+    prefetch a few batches ahead so the GPU never waits on dataloader I/O.
+    """
+    kwargs: dict = {
+        "batch_size": batch_size,
+        "num_workers": num_workers,
+        "pin_memory": pin_memory,
+        "drop_last": True,
+    }
+    if num_workers >= 1:
+        kwargs["persistent_workers"] = (
+            True if persistent_workers is None else persistent_workers
+        )
+        kwargs["prefetch_factor"] = (
+            4 if prefetch_factor is None else prefetch_factor
+        )
+    return DataLoader(dataset, **kwargs)

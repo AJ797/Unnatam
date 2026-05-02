@@ -31,8 +31,8 @@ IMPORTANT, please:
 
 \item {\bf Claims}
     \item[] Question: Do the main claims made in the abstract and introduction accurately reflect the paper's contributions and scope?
-    \item[] Answer: \answerTODO{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
-    \item[] Justification: \justificationTODO{}
+    \item[] Answer: \answerYes{}
+    \item[] Justification: The abstract and Section~\ref{sec:intro} state the two contributions (intracellular attention, hormone routing), describe the experimental scope (a 125M-parameter hybrid trained on FineWeb-Edu under a 2B-token budget), and identify the ablations that validate each contribution. The numerical claims in the abstract are quoted directly from Table~\ref{tab:main}.
     \item[] Guidelines:
     \begin{itemize}
         \item The answer \answerNA{} means that the abstract and introduction do not include the claims made in the paper.
@@ -43,8 +43,8 @@ IMPORTANT, please:
 
 \item {\bf Limitations}
     \item[] Question: Does the paper discuss the limitations of the work performed by the authors?
-    \item[] Answer: \answerTODO{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
-    \item[] Justification: \justificationTODO{}
+    \item[] Answer: \answerYes{}
+    \item[] Justification: Section~\ref{sec:analysis} (``Limitations'') discusses the small model scale (125M parameters, 2B tokens, below Chinchilla-optimal), the pretraining-only evaluation, the single-architecture study, and the throughput penalty of the reference selective scan that prevents intracellular attention from being ablated at this scale.
     \item[] Guidelines:
     \begin{itemize}
         \item The answer \answerNA{} means that the paper has no limitation while the answer \answerNo{} means that the paper has limitations, but those are not discussed in the paper. 
@@ -59,8 +59,8 @@ IMPORTANT, please:
 
 \item {\bf Theory assumptions and proofs}
     \item[] Question: For each theoretical result, does the paper provide the full set of assumptions and a complete (and correct) proof?
-    \item[] Answer: \answerTODO{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
-    \item[] Justification: \justificationTODO{}
+    \item[] Answer: \answerNA{}
+    \item[] Justification: The paper presents two empirically-validated architectural modifications and contains no theoretical results requiring proof.
     \item[] Guidelines:
     \begin{itemize}
         \item The answer \answerNA{} means that the paper does not include theoretical results. 
@@ -73,8 +73,8 @@ IMPORTANT, please:
 
     \item {\bf Experimental result reproducibility}
     \item[] Question: Does the paper fully disclose all the information needed to reproduce the main experimental results of the paper to the extent that it affects the main claims and/or conclusions of the paper (regardless of whether the code and data are provided or not)?
-    \item[] Answer: \answerTODO{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
-    \item[] Justification: \justificationTODO{}
+    \item[] Answer: \answerYes{}
+    \item[] Justification: Sections~\ref{sec:architecture}--\ref{sec:hormone} fully specify the architecture and both modifications, including the exact form of intracellular attention (Section~\ref{sec:intracellular}) and the hormone extraction protocol (Section~\ref{sec:hormone}). Section~\ref{sec:experiments} specifies the dataset (FineWeb-Edu sample-10BT), tokenizer (GPT-2 BPE), and seven training variants. Appendix~\ref{app:hyperparams} lists the full hyperparameter set; Appendix~\ref{app:contrast-pairs} describes the contrast-pair construction; Appendix~\ref{app:scan-pseudo} provides reference pseudocode for the modified selective scan. The released code reproduces every variant end-to-end.
     \item[] Guidelines:
     \begin{itemize}
         \item The answer \answerNA{} means that the paper does not include experiments.
@@ -93,8 +93,8 @@ IMPORTANT, please:
 
 \item {\bf Open access to data and code}
     \item[] Question: Does the paper provide open access to the data and code, with sufficient instructions to faithfully reproduce the main experimental results, as described in supplemental material?
-    \item[] Answer: \answerTODO{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
-    \item[] Justification: \justificationTODO{}
+    \item[] Answer: \answerYes{}
+    \item[] Justification: The full implementation, including the model, the modified selective scan, the hormone-extraction pipeline, all 42 contrast pairs, the training loop, and the orchestration script for the seven variants, is released as open source under a permissive licence. The training data is the public FineWeb-Edu \texttt{sample-10BT} subset, accessed via the HuggingFace datasets library; the released tokenisation script reproduces the binary shards used here. An anonymised release is included in the supplementary material.
     \item[] Guidelines:
     \begin{itemize}
         \item The answer \answerNA{} means that paper does not include experiments requiring code.
@@ -110,8 +110,8 @@ IMPORTANT, please:
 
 \item {\bf Experimental setting/details}
     \item[] Question: Does the paper specify all the training and test details (e.g., data splits, hyperparameters, how they were chosen, type of optimizer) necessary to understand the results?
-    \item[] Answer: \answerTODO{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
-    \item[] Justification: \justificationTODO{}
+    \item[] Answer: \answerYes{}
+    \item[] Justification: Section~\ref{sec:experiments} lists the optimiser (AdamW 8-bit), the precision (bfloat16 mixed), gradient clipping, sequence length, effective batch size, learning-rate schedule, total token budget, and the staged training protocol with hormone extraction at the 1B-token milestone. Appendix~\ref{app:hyperparams} provides the complete hyperparameter table. The held-out validation slice is a 50M-token portion of FineWeb-Edu disjoint from training.
     \item[] Guidelines:
     \begin{itemize}
         \item The answer \answerNA{} means that the paper does not include experiments.
@@ -121,8 +121,8 @@ IMPORTANT, please:
 
 \item {\bf Experiment statistical significance}
     \item[] Question: Does the paper report error bars suitably and correctly defined or other appropriate information about the statistical significance of the experiments?
-    \item[] Answer: \answerTODO{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
-    \item[] Justification: \justificationTODO{}
+    \item[] Answer: \answerNo{}
+    \item[] Justification: Each variant is trained with a single random seed because the compute budget --- a 2B-token pretraining run for each of five variants on a rented multi-GPU node --- does not accommodate multi-seed averaging. We report deterministic perplexity on a fixed validation split rather than confidence intervals. We acknowledge this limitation in Section~\ref{sec:analysis} and note that the relative ordering between variants is consistent with the per-seed differences typically reported in pretraining studies at this scale.
     \item[] Guidelines:
     \begin{itemize}
         \item The answer \answerNA{} means that the paper does not include experiments.
@@ -138,8 +138,8 @@ IMPORTANT, please:
 
 \item {\bf Experiments compute resources}
     \item[] Question: For each experiment, does the paper provide sufficient information on the computer resources (type of compute workers, memory, time of execution) needed to reproduce the experiments?
-    \item[] Answer: \answerTODO{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
-    \item[] Justification: \justificationTODO{}
+    \item[] Answer: \answerYes{}
+    \item[] Justification: Section~\ref{sec:experiments} states that all training is conducted on rented \TBD{8}$\times$RTX~4090 (24~GB each) nodes via vast.ai, in bfloat16 mixed precision with gradient checkpointing on the SSM scan. The total compute budget across all reported variants was approximately \TBD{XX} GPU-hours and \TBD{\$XX}. The reference selective scan required by intracellular attention is approximately \TBD{X}$\times$ slower per step than the fused kernel, motivating the descope of intracellular-attention-only ablations from the main matrix at this scale.
     \item[] Guidelines:
     \begin{itemize}
         \item The answer \answerNA{} means that the paper does not include experiments.
@@ -150,8 +150,8 @@ IMPORTANT, please:
     
 \item {\bf Code of ethics}
     \item[] Question: Does the research conducted in the paper conform, in every respect, with the NeurIPS Code of Ethics \url{https://neurips.cc/public/EthicsGuidelines}?
-    \item[] Answer: \answerTODO{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
-    \item[] Justification: \justificationTODO{}
+    \item[] Answer: \answerYes{}
+    \item[] Justification: The work involves only architectural research on small open-source language models trained on a public, filtered web subset (FineWeb-Edu). It involves no human subjects, no scraped private data, no deployment, and no application capable of identifying individuals.
     \item[] Guidelines:
     \begin{itemize}
         \item The answer \answerNA{} means that the authors have not reviewed the NeurIPS Code of Ethics.
@@ -162,8 +162,8 @@ IMPORTANT, please:
 
 \item {\bf Broader impacts}
     \item[] Question: Does the paper discuss both potential positive societal impacts and negative societal impacts of the work performed?
-    \item[] Answer: \answerTODO{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
-    \item[] Justification: \justificationTODO{}
+    \item[] Answer: \answerYes{}
+    \item[] Justification: The paper studies architectural modifications to small (125M parameter) language models. The contributions are general improvements that, like other architectural advances, could in principle be applied at any scale. We do not introduce capabilities that change the risk profile of language models beyond the existing baseline. Hormone routing, which exposes interpretable behavioural axes via a frozen vector bank with a learned gate, may have positive impact for interpretability and steering research; we discuss this in the conclusion.
     \item[] Guidelines:
     \begin{itemize}
         \item The answer \answerNA{} means that there is no societal impact of the work performed.
@@ -176,8 +176,8 @@ IMPORTANT, please:
     
 \item {\bf Safeguards}
     \item[] Question: Does the paper describe safeguards that have been put in place for responsible release of data or models that have a high risk for misuse (e.g., pre-trained language models, image generators, or scraped datasets)?
-    \item[] Answer: \answerTODO{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
-    \item[] Justification: \justificationTODO{}
+    \item[] Answer: \answerNA{}
+    \item[] Justification: The released artefacts (model code, hormone direction vectors, contrast pairs) are research-scale architectural building blocks at $\sim$125M parameters. They do not present elevated misuse risk relative to the open-source baselines (Mamba, GPT-2-class hybrids) on which they build.
     \item[] Guidelines:
     \begin{itemize}
         \item The answer \answerNA{} means that the paper poses no such risks.
@@ -188,8 +188,8 @@ IMPORTANT, please:
 
 \item {\bf Licenses for existing assets}
     \item[] Question: Are the creators or original owners of assets (e.g., code, data, models), used in the paper, properly credited and are the license and terms of use explicitly mentioned and properly respected?
-    \item[] Answer: \answerTODO{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
-    \item[] Justification: \justificationTODO{}
+    \item[] Answer: \answerYes{}
+    \item[] Justification: We cite Mamba~\citep{gu2023mamba} (Apache~2.0), the GPT-2 BPE tokeniser via tiktoken~\citep{radford2019language} (MIT), FineWeb-Edu~\citep{lozhkov2024fineweb} (ODC-By~1.0), and \texttt{lm-evaluation-harness}~\citep{eval-harness} (MIT). All are used in compliance with their respective licences; the released code respects these licences and notes them in its top-level documentation.
     \item[] Guidelines:
     \begin{itemize}
         \item The answer \answerNA{} means that the paper does not use existing assets.
@@ -204,8 +204,8 @@ IMPORTANT, please:
 
 \item {\bf New assets}
     \item[] Question: Are new assets introduced in the paper well documented and is the documentation provided alongside the assets?
-    \item[] Answer: \answerTODO{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
-    \item[] Justification: \justificationTODO{}
+    \item[] Answer: \answerYes{}
+    \item[] Justification: The released code (model, training pipeline, ablation orchestration, evaluation wrappers), the seven hormone direction vectors (each a unit-norm $\mathbb{R}^{1024}$ vector saved as \texttt{.npy}), and the 42 document-style contrast pairs are documented in the repository README and in Appendices~\ref{app:contrast-pairs}--\ref{app:hyperparams}. An anonymised release accompanies the supplementary material.
     \item[] Guidelines:
     \begin{itemize}
         \item The answer \answerNA{} means that the paper does not release new assets.
@@ -215,9 +215,9 @@ IMPORTANT, please:
     \end{itemize}
 
 \item {\bf Crowdsourcing and research with human subjects}
-    \item[] Question: For crowdsourcing experiments and research with human subjects, does the paper include the full text of instructions given to participants and screenshots, if applicable, as well as details about compensation (if any)? 
-    \item[] Answer: \answerTODO{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
-    \item[] Justification: \justificationTODO{}
+    \item[] Question: For crowdsourcing experiments and research with human subjects, does the paper include the full text of instructions given to participants and screenshots, if applicable, as well as details about compensation (if any)?
+    \item[] Answer: \answerNA{}
+    \item[] Justification: The work involves no crowdsourcing and no research with human subjects.
     \item[] Guidelines:
     \begin{itemize}
         \item The answer \answerNA{} means that the paper does not involve crowdsourcing nor research with human subjects.
@@ -227,8 +227,8 @@ IMPORTANT, please:
 
 \item {\bf Institutional review board (IRB) approvals or equivalent for research with human subjects}
     \item[] Question: Does the paper describe potential risks incurred by study participants, whether such risks were disclosed to the subjects, and whether Institutional Review Board (IRB) approvals (or an equivalent approval/review based on the requirements of your country or institution) were obtained?
-    \item[] Answer: \answerTODO{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
-    \item[] Justification: \justificationTODO{}
+    \item[] Answer: \answerNA{}
+    \item[] Justification: The work involves no human subjects and therefore no IRB review was required.
     \item[] Guidelines:
     \begin{itemize}
         \item The answer \answerNA{} means that the paper does not involve crowdsourcing nor research with human subjects.
@@ -239,9 +239,9 @@ IMPORTANT, please:
 
 \item {\bf Declaration of LLM usage}
     \item[] Question: Does the paper describe the usage of LLMs if it is an important, original, or non-standard component of the core methods in this research? Note that if the LLM is used only for writing, editing, or formatting purposes and does \emph{not} impact the core methodology, scientific rigor, or originality of the research, declaration is not required.
-    %this research? 
-    \item[] Answer: \answerTODO{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
-    \item[] Justification: \justificationTODO{}
+    %this research?
+    \item[] Answer: \answerNA{}
+    \item[] Justification: The methodology, model code, and analysis were authored by the authors. LLM tools were used only for routine writing assistance (copy-editing, suggestion of synonyms) and do not constitute an original or non-standard component of the research.
     \item[] Guidelines:
     \begin{itemize}
         \item The answer \answerNA{} means that the core method development in this research does not involve LLMs as any important, original, or non-standard components.
