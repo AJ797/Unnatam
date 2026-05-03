@@ -97,6 +97,21 @@ GATES = {
     "hr_rand":      {5:  0.0007, 11: -0.1217},
     "hr_fixedgate": {5:  1.0,    11:  1.0   },
     "hr_noext":     {5:  0.0120, 11:  0.3661},
+    "hr_forced":    {5:  0.1716, 11:  0.1662},  # init was 0.2 — drifted DOWN
+}
+
+# IA gates (per-SSM-layer; layers 0-4 and 6-10 are SSM in the 5:1 pattern, layer 5 and 11 are attn)
+IA_GATES = {
+    0:  +0.007684,
+    1:  +0.008167,
+    2:  +0.001213,
+    3:  -0.002127,
+    4:  +0.006907,
+    6:  +0.008673,
+    7:  +0.008550,
+    8:  +0.008834,
+    9:  +0.004669,
+    10: +0.006698,
 }
 
 MAGNITUDES_HR = {  # per-hormone learned magnitudes for tiny_hr
@@ -139,6 +154,14 @@ ROUTING_L11 = {
         [0.0145, 0.6106, 0.2939, 0.0703, 0.0042, 0.0040, 0.0025],
         [0.0898, 0.0182, 0.2372, 0.5289, 0.0083, 0.0032, 0.1144],
         [0.0163, 0.0538, 0.4581, 0.0587, 0.0383, 0.1104, 0.2643],
+    ]),
+    "hr_forced": np.array([
+        [0.0583, 0.0424, 0.0074, 0.1564, 0.1087, 0.4598, 0.1670],
+        [0.1387, 0.0015, 0.0402, 0.0449, 0.4460, 0.2936, 0.0350],
+        [0.1257, 0.2577, 0.0071, 0.0141, 0.0400, 0.1500, 0.4054],
+        [0.5854, 0.0127, 0.0351, 0.1033, 0.0671, 0.1913, 0.0050],
+        [0.1892, 0.0050, 0.0051, 0.0698, 0.0426, 0.4954, 0.1929],
+        [0.1515, 0.0228, 0.0551, 0.2309, 0.2486, 0.1957, 0.0953],
     ]),
 }
 
@@ -301,8 +324,8 @@ def fig_evals_grouped(out_dir: Path):
 # ────────────────────────────────────────────────────────────────────────────
 
 def fig_routing_heatmaps(out_dir: Path):
-    variants = ["hr", "hr_rand", "hr_fixedgate", "hr_noext"]
-    fig, axes = plt.subplots(1, 4, figsize=(16, 3.6))
+    variants = ["hr", "hr_rand", "hr_fixedgate", "hr_noext", "hr_forced"]
+    fig, axes = plt.subplots(1, 5, figsize=(19, 3.6))
     vmax = max(M.max() for M in ROUTING_L11.values())
 
     for ax, v in zip(axes, variants):
@@ -335,7 +358,7 @@ def fig_routing_heatmaps(out_dir: Path):
 # ────────────────────────────────────────────────────────────────────────────
 
 def fig_gates(out_dir: Path):
-    variants = ["hr", "hr_rand", "hr_fixedgate", "hr_noext"]
+    variants = ["hr", "hr_rand", "hr_fixedgate", "hr_noext", "hr_forced"]
     layers = [5, 11]
     bar_w = 0.35
     x = np.arange(len(variants))
@@ -392,7 +415,7 @@ def fig_magnitudes(out_dir: Path):
 # ────────────────────────────────────────────────────────────────────────────
 
 def fig_l1_distance(out_dir: Path):
-    variants = ["hr", "hr_rand", "hr_fixedgate", "hr_noext"]
+    variants = ["hr", "hr_rand", "hr_fixedgate", "hr_noext", "hr_forced"]
     l1s = [max_pairwise_l1(ROUTING_L11[v]) for v in variants]
     fig, ax = plt.subplots(figsize=(5, 3.2))
     bars = ax.bar([VARIANT_LABEL[v] for v in variants], l1s,
@@ -439,38 +462,24 @@ def fig_ia_vs_base(runs_dir: Path, out_dir: Path):
 # ────────────────────────────────────────────────────────────────────────────
 
 def fig_ia_gates(runs_dir: Path, out_dir: Path):
-    ckpt_path = runs_dir / "tiny_ia" / "ckpt_final.pt"
-    if not ckpt_path.exists():
-        print("  IA ckpt not present — skipping fig9")
+    """Plot the per-SSM-layer IA gates. Uses hardcoded IA_GATES dict; ckpt
+    loading is no longer required."""
+    if not IA_GATES:
+        print("  IA_GATES dict is empty — skipping fig9")
         return
-    import torch
-    sd = torch.load(ckpt_path, map_location="cpu", weights_only=False)
-    sd = sd.get("model", sd.get("state_dict", sd))
-    gates = []
-    for k, v in sorted(sd.items()):
-        if "intra_attn" in k and "gate" in k and v.numel() == 1:
-            # parse layer index
-            try:
-                layer_idx = int(k.split("layers.")[1].split(".")[0])
-            except Exception:
-                layer_idx = -1
-            gates.append((layer_idx, k, float(v.item())))
-    if not gates:
-        print("  no IA gates found in ckpt — skipping fig9")
-        return
-    gates.sort()
+    layer_idxs = sorted(IA_GATES.keys())
+    vals = [IA_GATES[i] for i in layer_idxs]
     fig, ax = plt.subplots(figsize=(6.5, 3.2))
-    layer_idxs = [g[0] for g in gates]
-    vals = [g[2] for g in gates]
     ax.bar([f"L{li}" for li in layer_idxs], vals,
            color=VARIANT_COLOR["ia"], edgecolor="black", linewidth=0.4)
     for x, v in zip(range(len(vals)), vals):
-        ax.text(x, v + (0.005 if v >= 0 else -0.005), f"{v:+.4f}",
+        ax.text(x, v + (0.0005 if v >= 0 else -0.0005), f"{v:+.4f}",
                 ha="center",
-                va="bottom" if v >= 0 else "top", fontsize=8)
+                va="bottom" if v >= 0 else "top", fontsize=7)
     ax.axhline(0, color="black", linewidth=0.6)
     ax.set_ylabel("IA gate g (zero-init)")
-    ax.set_title("IA gate values at end of Stage 2 (per SSM layer)")
+    ax.set_title("IA gate values after 12M Stage-2 tokens (per SSM layer)")
+    ax.set_ylim(-0.005, max(vals) * 1.4)
     fig.tight_layout()
     save_fig(fig, out_dir, "fig9_ia_gates")
     plt.close(fig)

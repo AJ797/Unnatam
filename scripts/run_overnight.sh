@@ -93,13 +93,13 @@ echo ""
 # ============================================================================
 # Phase 1 — IA training (~8.5h)
 # ============================================================================
-log "PHASE 1 — IA Stage-2 training (warmup=50, 20M tokens)"
+log "PHASE 1 — IA Stage-2 training (warmup=50, 12M tokens)"
 
 rm -rf /workspace/runs/tiny_ia
 
-# Hard 10h timeout (should finish in ~8.5h, 90 min headroom for any slow step).
+# Hard 7h timeout (should finish in ~5h, 2h headroom for any slow step).
 # --kill-after=60 sends SIGKILL 60s after SIGTERM if the run doesn't clean up.
-export STAGE2_TOKENS=20M
+export STAGE2_TOKENS=12M
 export MICRO_BATCH=2
 export GRAD_ACCUM=4
 export IA_STRIDE=32
