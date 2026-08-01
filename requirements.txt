@@ -1,0 +1,24 @@
+# Core
+torch>=2.1.0
+numpy>=1.24.0
+
+# Tokenisation
+tiktoken>=0.5.0
+
+# Data loading and benchmark datasets
+datasets>=2.14.0
+huggingface-hub>=0.20.0
+
+# Optimiser (8-bit AdamW)
+bitsandbytes>=0.41.0
+
+# Mamba / selective scan kernels (optional but recommended for the fused path)
+# Build from source on the deployment GPU; ABI-compatible with the local PyTorch:
+#   CAUSAL_CONV1D_FORCE_BUILD=TRUE pip install --no-build-isolation --no-cache-dir causal-conv1d
+#   MAMBA_FORCE_BUILD=TRUE pip install --no-build-isolation --no-cache-dir mamba-ssm
+# A pure-PyTorch reference scan is also included for environments without these.
+mamba-ssm>=1.2.0  ; sys_platform != "win32"
+causal-conv1d>=1.2.0  ; sys_platform != "win32"
+
+# Plotting (figures only)
+matplotlib>=3.7.0

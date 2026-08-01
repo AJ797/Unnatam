@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# Editor / IDE
+.idea/
+.vscode/
+.claude/
+
+# Large binary artefacts
+*.pt
+*.tgz
+*.tar.gz
+*.zip
+runs/
+UnnatamData/
+paper/figs/*.png
+"When Structure Doesn't Matter"*.pdf
+
+# Local mamba-1.4B artefacts (regenerable on the rig)
+mamba14b_*.npy
+mamba14b_*.txt
+mamba14b_*.json
+
+# Local training-run inspection artefacts
+tiny_hr_forced/
+tiny_hr/
+tiny_hr_rand/
+tiny_hr_fixedgate/
+tiny_hr_noext/
+tiny_base/
+tiny_ia/
+tiny_stage1/
+
+# System
+.DS_Store
+Thumbs.db

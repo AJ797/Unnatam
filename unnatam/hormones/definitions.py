@@ -5,7 +5,7 @@ affective state, NOT instructions to a model. This lets us extract the
 representation-space direction associated with each hormone from a base model
 that hasn't been instruction-tuned (Unnatam during pretraining).
 
-Seven hormones (ported from AhamV2):
+Seven hormones (anonymised for review):
     ADR  — Adrenaline           (urgency, time pressure, sharp focus)
     CDO  — Cognitive Dopamine   (curiosity, anticipated insight)
     LCO  — Logical Cortisol     (skepticism, critical evaluation)
