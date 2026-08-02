@@ -81,16 +81,17 @@ FINAL_VAL_LOSS = {
     "hr_fixedgate":    3.2632480025291444,
     "hr_noext":        3.3392648339271545,
     "hr_forced":       3.432480263710022,   # 125M Stage-2, matched-step comparison
-    # "hr_noext_cont": TBD after ablation runs
+    "hr_noext_cont":   3.2795724272727966,  # PPL 26.56; isolation ablation, 1B Stage-2
 }
 
 # All five evals (full test sets)
 EVALS = {
-    "base":         {"hellaswag_acc": 0.2789, "hellaswag_accn": 0.2814, "lambada": 0.2047, "arc_e": 0.4369, "arc_c": 0.2338, "piqa": 0.6115},
-    "hr":           {"hellaswag_acc": 0.2789, "hellaswag_accn": 0.2800, "lambada": 0.2047, "arc_e": 0.4339, "arc_c": 0.2338, "piqa": 0.6110},
-    "hr_rand":      {"hellaswag_acc": 0.2790, "hellaswag_accn": 0.2815, "lambada": 0.2047, "arc_e": 0.4352, "arc_c": 0.2338, "piqa": 0.6126},
-    "hr_fixedgate": {"hellaswag_acc": 0.2793, "hellaswag_accn": 0.2814, "lambada": 0.2043, "arc_e": 0.4360, "arc_c": 0.2363, "piqa": 0.6115},
-    "hr_noext":     {"hellaswag_acc": 0.2706, "hellaswag_accn": 0.2759, "lambada": 0.1826, "arc_e": 0.4082, "arc_c": 0.2321, "piqa": 0.6126},
+    "base":           {"hellaswag_acc": 0.2789, "hellaswag_accn": 0.2814, "lambada": 0.2047, "arc_e": 0.4369, "arc_c": 0.2338, "piqa": 0.6115},
+    "hr":             {"hellaswag_acc": 0.2789, "hellaswag_accn": 0.2800, "lambada": 0.2047, "arc_e": 0.4339, "arc_c": 0.2338, "piqa": 0.6110},
+    "hr_rand":        {"hellaswag_acc": 0.2790, "hellaswag_accn": 0.2815, "lambada": 0.2047, "arc_e": 0.4352, "arc_c": 0.2338, "piqa": 0.6126},
+    "hr_fixedgate":   {"hellaswag_acc": 0.2793, "hellaswag_accn": 0.2814, "lambada": 0.2043, "arc_e": 0.4360, "arc_c": 0.2363, "piqa": 0.6115},
+    "hr_noext":       {"hellaswag_acc": 0.2706, "hellaswag_accn": 0.2759, "lambada": 0.1826, "arc_e": 0.4082, "arc_c": 0.2321, "piqa": 0.6126},
+    "hr_noext_cont":  {"hellaswag_acc": 0.2801, "hellaswag_accn": 0.2834, "lambada": 0.1912, "arc_e": 0.4171, "arc_c": 0.2355, "piqa": 0.6126},
 }
 METRIC_LABELS = {
     "hellaswag_accn": "HellaSwag",
@@ -135,7 +136,7 @@ EFFECTIVE_MU = {
     "hr_fixedgate":    1.0,   # gate 1.0 * magnitudes ~1.0
     "hr_noext":        0.36,  # gate 0.37 * magnitudes ~1.0
     "hr_forced":       0.50,  # α=3 * gate 0.17 * magnitudes 0.99
-    "hr_noext_cont":   None,  # TBD after ablation
+    "hr_noext_cont":   0.30,  # approx; staged HR variant with random-init-extracted bank
 }
 
 # IA gates (per-SSM-layer; layers 0-4 and 6-10 are SSM in the 5:1 pattern, layer 5 and 11 are attn)
