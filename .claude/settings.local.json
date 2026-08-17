@@ -3,7 +3,22 @@
     "allow": [
       "Read(//mnt/e/empire/**)",
       "Bash(python -m pytest tests/ -q --tb=short)",
-      "Bash(python -m pytest tests/test_smoke.py -q --tb=short)"
+      "Bash(python -m pytest tests/test_smoke.py -q --tb=short)",
+      "Bash(python3 -m json.tool)",
+      "Bash(python3 scripts/make_paper_plots.py --runs runs/ --out paper/figs/)",
+      "Bash(py -c \"import sys; print\\(sys.executable\\)\")",
+      "Bash(py scripts/make_paper_plots.py --runs runs/ --out paper/figs/)",
+      "Bash(PYTHONIOENCODING=utf-8 py scripts/make_paper_plots.py --runs runs/ --out paper/figs/)",
+      "Bash(py -c ' *)",
+      "Bash(tar tzf *)",
+      "Bash(unzip -l /e/empire/Unnatam/UnnatamData/eval_logs.zip)",
+      "Bash(unzip -l /e/empire/Unnatam/UnnatamData/figs.zip)",
+      "Bash(grep -n \"^\\\\\\\\\\\\\\\\section\\\\|^\\\\\\\\\\\\\\\\subsection\\\\|^\\\\\\\\\\\\\\\\paragraph\" 06_experiments.tex)",
+      "Bash(grep -n \"^\\\\\\\\\\\\\\\\section\\\\|^\\\\\\\\\\\\\\\\subsection\\\\|^\\\\\\\\\\\\\\\\paragraph\" 07_analysis.tex)",
+      "Bash(grep -nE '\\\\\\\\\\(sub\\)?section\\\\{' 06_experiments.tex)",
+      "Bash(grep -nE '\\\\\\\\\\(sub\\)?section\\\\{' 07_analysis.tex)",
+      "Bash(grep -n \"0\\\\.6.*1\\\\.6\\\\|0\\\\.60\\\\|L_1 = 0\\\\.73\\\\|L_1 \\\\\\\\\\\\\\\\approx 0\\\\.73\" /e/empire/Unnatam/paper/sections/*.tex)",
+      "Bash(grep -n \"mu.*0\\\\.5\\\\|\\\\\\\\\\\\\\\\mu \\\\\\\\\\\\\\\\leq\\\\|\\\\\\\\\\\\\\\\mu \\\\\\\\\\\\\\\\approx 0\\\\.5\" /e/empire/Unnatam/paper/sections/*.tex)"
     ]
   }
 }
