@@ -18,7 +18,25 @@
       "Bash(grep -nE '\\\\\\\\\\(sub\\)?section\\\\{' 06_experiments.tex)",
       "Bash(grep -nE '\\\\\\\\\\(sub\\)?section\\\\{' 07_analysis.tex)",
       "Bash(grep -n \"0\\\\.6.*1\\\\.6\\\\|0\\\\.60\\\\|L_1 = 0\\\\.73\\\\|L_1 \\\\\\\\\\\\\\\\approx 0\\\\.73\" /e/empire/Unnatam/paper/sections/*.tex)",
-      "Bash(grep -n \"mu.*0\\\\.5\\\\|\\\\\\\\\\\\\\\\mu \\\\\\\\\\\\\\\\leq\\\\|\\\\\\\\\\\\\\\\mu \\\\\\\\\\\\\\\\approx 0\\\\.5\" /e/empire/Unnatam/paper/sections/*.tex)"
+      "Bash(grep -n \"mu.*0\\\\.5\\\\|\\\\\\\\\\\\\\\\mu \\\\\\\\\\\\\\\\leq\\\\|\\\\\\\\\\\\\\\\mu \\\\\\\\\\\\\\\\approx 0\\\\.5\" /e/empire/Unnatam/paper/sections/*.tex)",
+      "Bash(grep -rn \"includegraphics\\\\|\\\\\\\\\\\\\\\\label{fig:\" E:/empire/Unnatam/paper/sections/ E:/empire/Unnatam/paper/main.tex)",
+      "Bash(find E:/empire/Unnatam -name \"train.jsonl\" -o -name \"*train*.jsonl\" 2>/dev/null | head -20; echo ---; ls E:/empire/Unnatam/runs 2>/dev/null; ls E:/empire/UnnatamData 2>/dev/null)",
+      "Bash(py scripts/make_paper_plots.py --runs runs --out paper/figs)",
+      "Bash(PYTHONIOENCODING=utf-8 py scripts/make_paper_plots.py --runs runs --out paper/figs)",
+      "Bash(ls E:/empire/Unnatam/paper_overleaf.zip 2>/dev/null && stat -c '%s bytes' E:/empire/Unnatam/paper_overleaf.zip 2>/dev/null; ls E:/empire/Unnatam/paper/)",
+      "PowerShell(Set-Location E:\\\\empire\\\\Unnatam; Remove-Item paper_overleaf.zip -Force; Compress-Archive -Path paper\\\\main.tex,paper\\\\neurips_2026.sty,paper\\\\neurips_2026.tex,paper\\\\references.bib,paper\\\\checklist.tex,paper\\\\sections,paper\\\\figs,paper\\\\figures -DestinationPath paper_overleaf.zip -CompressionLevel Optimal; \\(Get-Item paper_overleaf.zip\\).Length)",
+      "Bash(grep -n \"\\\\\\\\\\\\\\\\section\\\\|\\\\\\\\\\\\\\\\subsection\\\\|\\\\\\\\\\\\\\\\appendix\\\\|label{app\" paper/sections/09_appendix.tex)",
+      "Bash(grep -n \"contribution\\\\|\\\\\\\\\\\\\\\\item\\\\|paragraph\\\\|textbf\" paper/sections/01_intro.tex)",
+      "Bash(PYTHONIOENCODING=utf-8 py scripts/routing_intervention_kl.py --ckpt runs/workspace/artefacts_overnight/all_overnight/tiny_hr_forced/ckpt_final.pt --alpha 3.0 --corpus_dir data/heldout_genres --n_per_genre 20 --out runs/tiny_hr_forced/routing_intervention_kl.json)",
+      "Bash(echo \"exit:$?\")",
+      "Bash(timeout 90 tar tzf runs/workspace/artefacts_overnight/all_overnight.tgz)",
+      "Bash(grep -iE \"ckpt|\\\\.pt$|stage|base|milestone|tiny_\")",
+      "Bash(timeout 100 tar tzf runs/workspace/artefacts_overnight/all_overnight.tgz)",
+      "Bash(grep -vE \"/$\")",
+      "Bash(py -c \"import sys,json; print\\(list\\(json.loads\\(sys.stdin.readline\\(\\)\\).keys\\(\\)\\)\\)\")",
+      "Bash(PYTHONIOENCODING=utf-8 py scripts/routing_controls.py --ckpt runs/workspace/artefacts_overnight/all_overnight/tiny_hr_forced/ckpt_final.pt --corpus_dir data/heldout_genres --n_per_genre 20 --layer 5 --n_permutations 2000 --out runs/tiny_hr_forced/routing_controls_layer5.json)",
+      "Bash(PYTHONIOENCODING=utf-8 py scripts/reconstruct_layer5_routing.py)",
+      "Bash(cd E:/empire/Unnatam && echo \"=== searching for hr_noext_cont download ===\" && find . /c/Users/ariet/Downloads -iname \"*noext*cont*\" 2>/dev/null | grep -iv \"\\\\.py\\\\|\\\\.tex\\\\|\\\\.md\\\\|\\\\.sh\" | head; echo \"---scratchpad---\"; ls \"C:/Users/ariet/AppData/Local/Temp/claude/E--empire-Unnatam/0f761b1a-42e2-4ee0-a08a-068da5716f31/scratchpad/\" 2>/dev/null)"
     ]
   }
 }

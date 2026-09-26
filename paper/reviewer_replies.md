@@ -98,7 +98,7 @@ Moved fully to future work. See our response to Reviewer D15v #2 for the specifi
 - ✅ Schedule-causality claim hedged in abstract, conclusion, §6.3 (D15v #1, tkcT open-ended)
 - ✅ HR-noext confound explicitly acknowledged in Limitations (D15v #1)
 - ✅ Formal definition of homeostatic envelope (D15v presentation-clarity)
-- ✅ Figure 10 (envelope diagram) added (D15v presentation-clarity)
+- ✅ Figure 4 (envelope diagram) added (D15v presentation-clarity)
 
 **Landing in the next 2–5 days:**
 - 🕒 HR-noext-cont isolation ablation numbers (D15v #1 strong version). This is a single overnight training run (~22 hours) on 8× RTX 4090; the script is queued and included in the release. Section 6.5 currently holds a three-branch interpretation guide that we will replace with the concrete result and one selected branch as soon as the run completes.

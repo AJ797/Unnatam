@@ -1,7 +1,9 @@
-\documentclass{article}
+\documentclass[10pt]{article} % For LaTeX2e
 
-\PassOptionsToPackage{numbers, compress}{natbib}
-\usepackage{neurips_2026}
+% ── TMLR camera-ready ────────────────────────────────────────────────────────
+% The [accepted] option de-anonymises the paper and prints the TMLR
+% certification header + the OpenReview link defined below.
+\usepackage[accepted]{tmlr}
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -28,11 +30,19 @@
 \newcommand{\TODO}[1]{\textcolor{red}{[TODO: #1]}}
 \newcommand{\TBD}[1]{\textcolor{red}{[#1]}}
 
-\title{When Structure Doesn't Matter: \\ Loss-Invariant Routing Specialisation \\ in a 125M-Parameter Hybrid Language Model}
+\title{When Routing Doesn't Move the Loss: Genre-Associated Routing Specialisation in a 125M-Parameter Hybrid Language Model}
 
-\author{%
-  Ariet Jha \\
-}
+% ── Authors (de-anonymised) ──────────────────────────────────────────────────
+% CONFIRM before submitting: (1) the email you want publicly listed, and
+% (2) your affiliation. "Independent Researcher" is a placeholder default —
+% edit it if you have an institutional affiliation.
+\author{\name Ariet Jha \email ariet.jha@gmail.com \\
+      \addr Independent Researcher}
+
+% ── Camera-ready metadata (CONFIRM the publication month) ────────────────────
+\def\month{10}   % 2-digit publication month
+\def\year{2026}  % 4-digit publication year
+\def\openreview{\url{https://openreview.net/forum?id=uZuaQlxfwG}}
 
 \begin{document}
 
@@ -48,13 +58,10 @@
 \input{sections/07_analysis}
 \input{sections/08_conclusion}
 
-\bibliographystyle{plainnat}
+\bibliographystyle{tmlr}
 \bibliography{references}
 
 \appendix
 \input{sections/09_appendix}
-
-\newpage
-\input{checklist.tex}
 
 \end{document}

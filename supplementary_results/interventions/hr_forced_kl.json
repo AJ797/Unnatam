@@ -1,0 +1,32 @@
+{
+  "ckpt": "runs/workspace/artefacts_overnight/all_overnight/tiny_hr_forced/ckpt_final.pt",
+  "alpha": 3.0,
+  "n_tokens": 35585,
+  "real_routing": {
+    "nll": 3.824953152923348,
+    "ppl": 45.83065328391419
+  },
+  "interventions": {
+    "uniform": {
+      "ppl": 45.83350898142085,
+      "delta_ppl": 0.0028556975066607038,
+      "mean_kl_fwd_nats": 4.709426688009556e-06,
+      "mean_kl_rev_nats": 4.707414738206305e-06,
+      "top1_flip_rate": 0.0012083743150203738
+    },
+    "shuffled": {
+      "ppl": 45.83334715616475,
+      "delta_ppl": 0.002693872250560503,
+      "mean_kl_fwd_nats": 7.611012553569263e-06,
+      "mean_kl_rev_nats": 7.607843564771973e-06,
+      "top1_flip_rate": 0.0016017985106084023
+    },
+    "zerogate": {
+      "ppl": 45.830800655310696,
+      "delta_ppl": 0.00014737139650833342,
+      "mean_kl_fwd_nats": 1.6724169404136384e-05,
+      "mean_kl_rev_nats": 1.6735682707712803e-05,
+      "top1_flip_rate": 0.002810172825628776
+    }
+  }
+}

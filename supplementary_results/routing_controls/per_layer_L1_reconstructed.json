@@ -1,0 +1,38 @@
+{
+  "note": "l5 = 2*avg - l11 (exact; two hormone layers). Validated: rows sum to 1, non-negative.",
+  "variants": {
+    "hr": {
+      "layer5_L1": 0.32049999999999995,
+      "layer11_L1": 0.9591999999999999,
+      "layer5_source": "reconstructed",
+      "gates": {
+        "5": -0.0002,
+        "11": 0.2314
+      }
+    },
+    "hr_rand": {
+      "layer5_L1": null,
+      "layer11_L1": 1.3719,
+      "layer5_source": "not_logged; lower gate closed (|g5|=7e-4) -> near-uniform",
+      "gates": {
+        "5": 0.0007,
+        "11": -0.1217
+      }
+    },
+    "hr_fixedgate": {
+      "layer5_L1": null,
+      "layer11_L1": 1.5631999999999997,
+      "layer5_source": "GAP: lower gate frozen OPEN (1.0); needs checkpoint",
+      "gates": {
+        "5": 1.0,
+        "11": 1.0
+      }
+    },
+    "hr_noext": {
+      "layer5_L1": 0.32960000000000006,
+      "layer11_L1": 1.3379,
+      "layer5_source": "reconstructed",
+      "gates": "not_logged (lower gate closed)"
+    }
+  }
+}

@@ -160,6 +160,39 @@ python scripts/run_evals.py --ckpt runs/tiny_ia/ckpt_final.pt \
 python scripts/make_paper_plots.py --runs runs/ --out figs/
 ```
 
+### 7. Camera-ready controls (inference only, single GPU)
+
+Per-variant, per-layer routing controls with document-level permutation null and
+direct residual-perturbation measurement:
+
+```bash
+# both layers, on each retained checkpoint
+for L in 5 11; do
+  python scripts/routing_controls.py --ckpt runs/tiny_hr_forced/ckpt_final.pt \
+      --corpus_dir data/heldout_genres --n_per_genre 20 --layer $L \
+      --n_permutations 2000 --out runs/tiny_hr_forced/routing_controls_layer${L}.json
+done
+```
+
+Inference-time routing interventions (uniform / shuffled / zero-gate), reporting
+ΔPPL, KL divergence between predictive distributions, and top-1 flip rate:
+
+```bash
+python scripts/routing_intervention_kl.py --ckpt runs/tiny_hr_forced/ckpt_final.pt \
+    --alpha 3.0 --corpus_dir data/heldout_genres --n_per_genre 20 \
+    --out runs/tiny_hr_forced/routing_intervention_kl.json   # alpha=1.0 for normal-gate variants
+```
+
+Layer-5 reconstruction from the archived per-run captures (`l5 = 2*avg - l11`,
+exact for two hormone layers; validates each row is a valid distribution):
+
+```bash
+python scripts/reconstruct_layer5_routing.py
+```
+
+Precomputed outputs for all of the above are in `supplementary_results/`
+(`routing_controls/`, `interventions/`).
+
 ## Hardware
 
 We trained on rented 8× RTX 4090/5090 (24 GB) instances. Total wall-clock:

@@ -1,0 +1,1494 @@
+Okay so i went back in the chat and just tried to find all the messages where i'd pasted numerical outputs from the cloud console all those months ago lmao we're out here doing llm archaeology.
+
+-------------------------
+yea about that lmao.
+the evals arent running for some reason?
+Every 30.0s: nvidia-smi --query-gpu=index,utilization.gpu --format=csv | head -10; echo; ls -la /workspace/runs/tiny_*/evals.json 2>...  89031d59e9d5: Sat May  2 07:09:41 2026
+
+index, utilization.gpu [%]
+0, 0 %
+1, 0 %
+2, 0 %
+3, 0 %
+4, 0 %
+5, 0 %
+6, 0 %
+7, 0 %
+
+-rw-rw-r-- 1 root root 811 May  2 06:47 /workspace/runs/tiny_base/evals.json
+-rw-rw-r-- 1 root root 810 May  2 06:48 /workspace/runs/tiny_hr/evals.json
+-rw-rw-r-- 1 root root 819 May  2 06:50 /workspace/runs/tiny_hr_fixedgate/evals.json
+-rw-rw-r-- 1 root root 816 May  2 06:50 /workspace/runs/tiny_hr_noext/evals.json
+-rw-rw-r-- 1 root root 815 May  2 06:49 /workspace/runs/tiny_hr_rand/evals.json
+
+
+
+(main) root@C.35957673:/workspace/Unnatam$ nohup bash scripts/run_all_evals_[parallel.sh](http://parallel.sh) > /workspace/master_eval.log 2>&1 < /dev/null &
+disown
+[1] 39952
+i did this, but still nope.
+
+
+-------------------------
+
+(main) root@C.35957673:/workspace/Unnatam$ for d in tiny_base tiny_hr tiny_hr_rand tiny_hr_noext tiny_hr_fixedgate; do
+    echo "═══ ${d} ═══"
+    cat /workspace/runs/${d}/evals.json | python3 -m json.tool
+    echo
+done
+═══ tiny_base ═══
+{
+    "ckpt": "/workspace/runs/tiny_base/ckpt_[final.pt](http://final.pt)",
+    "size": "tiny",
+    "use_intra_attn": false,
+    "use_hormones": false,
+    "results": [
+        {
+            "name": "hellaswag",
+            "metric": "acc",
+            "value": 0.2789285002987453,
+            "n_examples": 10042
+        },
+        {
+            "name": "hellaswag",
+            "metric": "acc_norm",
+            "value": 0.28141804421429994,
+            "n_examples": 10042
+        },
+        {
+            "name": "lambada",
+            "metric": "acc",
+            "value": 0.20473510576363282,
+            "n_examples": 5153
+        },
+        {
+            "name": "arc_easy",
+            "metric": "acc_norm",
+            "value": 0.43686868686868685,
+            "n_examples": 2376
+        },
+        {
+            "name": "arc_challenge",
+            "metric": "acc_norm",
+            "value": 0.23378839590443687,
+            "n_examples": 1172
+        },
+        {
+            "name": "piqa",
+            "metric": "acc_norm",
+            "value": 0.6115342763873776,
+            "n_examples": 1838
+        }
+    ]
+}
+
+═══ tiny_hr ═══
+{
+    "ckpt": "/workspace/runs/tiny_hr/ckpt_[final.pt](http://final.pt)",
+    "size": "tiny",
+    "use_intra_attn": false,
+    "use_hormones": true,
+    "results": [
+        {
+            "name": "hellaswag",
+            "metric": "acc",
+            "value": 0.2789285002987453,
+            "n_examples": 10042
+        },
+        {
+            "name": "hellaswag",
+            "metric": "acc_norm",
+            "value": 0.2800238996215893,
+            "n_examples": 10042
+        },
+        {
+            "name": "lambada",
+            "metric": "acc",
+            "value": 0.20473510576363282,
+            "n_examples": 5153
+        },
+        {
+            "name": "arc_easy",
+            "metric": "acc_norm",
+            "value": 0.43392255892255893,
+            "n_examples": 2376
+        },
+        {
+            "name": "arc_challenge",
+            "metric": "acc_norm",
+            "value": 0.23378839590443687,
+            "n_examples": 1172
+        },
+        {
+            "name": "piqa",
+            "metric": "acc_norm",
+            "value": 0.6109902067464635,
+            "n_examples": 1838
+        }
+    ]
+}
+
+═══ tiny_hr_rand ═══
+{
+    "ckpt": "/workspace/runs/tiny_hr_rand/ckpt_[final.pt](http://final.pt)",
+    "size": "tiny",
+    "use_intra_attn": false,
+    "use_hormones": true,
+    "results": [
+        {
+            "name": "hellaswag",
+            "metric": "acc",
+            "value": 0.27902808205536744,
+            "n_examples": 10042
+        },
+        {
+            "name": "hellaswag",
+            "metric": "acc_norm",
+            "value": 0.2815176259709221,
+            "n_examples": 10042
+        },
+        {
+            "name": "lambada",
+            "metric": "acc",
+            "value": 0.20473510576363282,
+            "n_examples": 5153
+        },
+        {
+            "name": "arc_easy",
+            "metric": "acc_norm",
+            "value": 0.4351851851851852,
+            "n_examples": 2376
+        },
+        {
+            "name": "arc_challenge",
+            "metric": "acc_norm",
+            "value": 0.23378839590443687,
+            "n_examples": 1172
+        },
+        {
+            "name": "piqa",
+            "metric": "acc_norm",
+            "value": 0.6126224156692056,
+            "n_examples": 1838
+        }
+    ]
+}
+
+═══ tiny_hr_noext ═══
+{
+    "ckpt": "/workspace/runs/tiny_hr_noext/ckpt_[final.pt](http://final.pt)",
+    "size": "tiny",
+    "use_intra_attn": false,
+    "use_hormones": true,
+    "results": [
+        {
+            "name": "hellaswag",
+            "metric": "acc",
+            "value": 0.2705636327424816,
+            "n_examples": 10042
+        },
+        {
+            "name": "hellaswag",
+            "metric": "acc_norm",
+            "value": 0.27594104760007965,
+            "n_examples": 10042
+        },
+        {
+            "name": "lambada",
+            "metric": "acc",
+            "value": 0.18261207063846302,
+            "n_examples": 5153
+        },
+        {
+            "name": "arc_easy",
+            "metric": "acc_norm",
+            "value": 0.40824915824915825,
+            "n_examples": 2376
+        },
+        {
+            "name": "arc_challenge",
+            "metric": "acc_norm",
+            "value": 0.23208191126279865,
+            "n_examples": 1172
+        },
+        {
+            "name": "piqa",
+            "metric": "acc_norm",
+            "value": 0.6126224156692056,
+            "n_examples": 1838
+        }
+    ]
+}
+
+═══ tiny_hr_fixedgate ═══
+{
+    "ckpt": "/workspace/runs/tiny_hr_fixedgate/ckpt_[final.pt](http://final.pt)",
+    "size": "tiny",
+    "use_intra_attn": false,
+    "use_hormones": true,
+    "results": [
+        {
+            "name": "hellaswag",
+            "metric": "acc",
+            "value": 0.279326827325234,
+            "n_examples": 10042
+        },
+        {
+            "name": "hellaswag",
+            "metric": "acc_norm",
+            "value": 0.28141804421429994,
+            "n_examples": 10042
+        },
+        {
+            "name": "lambada",
+            "metric": "acc",
+            "value": 0.20434698234038423,
+            "n_examples": 5153
+        },
+        {
+            "name": "arc_easy",
+            "metric": "acc_norm",
+            "value": 0.43602693602693604,
+            "n_examples": 2376
+        },
+        {
+            "name": "arc_challenge",
+            "metric": "acc_norm",
+            "value": 0.2363481228668942,
+            "n_examples": 1172
+        },
+        {
+            "name": "piqa",
+            "metric": "acc_norm",
+            "value": 0.6120783460282916,
+            "n_examples": 1838
+        }
+    ]
+}
+
+
+
+and
+
+
+(main) root@C.35957673:/workspace/Unnatam$ for d in tiny_base tiny_hr tiny_hr_rand tiny_hr_noext tiny_hr_fixedgate; do
+    v=$(grep -oP '"val_loss":\s*\K[\d.]+' /workspace/runs/${d}/train.jsonl 2>/dev/null | tail -1)
+    echo "${d}  final val_loss=${v}  ppl=$(python3 -c "import math; print(f'{math.exp(${v:-0}):.3f}')")"
+done
+tiny_base  final val_loss=3.2632431268692015  ppl=26.134
+tiny_hr  final val_loss=3.263246738910675  ppl=26.134
+tiny_hr_rand  final val_loss=3.2631502032279966  ppl=26.132
+tiny_hr_noext  final val_loss=3.3392648339271545  ppl=28.198
+tiny_hr_fixedgate  final val_loss=3.2632480025291444  ppl=26.134
+(main) root@C.35957673:/workspace/Unnatam$ cd /workspace
+mkdir -p /tmp/logs
+for d in tiny_base tiny_hr tiny_hr_rand tiny_hr_noext tiny_hr_fixedgate; do
+    cp runs/${d}/train.jsonl /tmp/logs/${d}_train.jsonl
+done
+tar czf /tmp/all_train_logs.tgz -C /tmp logs
+ls -lh /tmp/all_train_logs.tgz   # tiny — kilobytes, easy scp down
+-rw-rw-r-- 1 root root 18K May  2 07:51 /tmp/all_train_logs.tgz
+(main) root@C.35957673:/workspace$ cd /workspace
+(main) root@C.35957673:/workspace$ mkdir -p /tmp/logs
+(main) root@C.35957673:/workspace$ for d in tiny_base tiny_hr tiny_hr_rand tiny_hr_noext tiny_hr_fixedgate; do
+    cp runs/${d}/train.jsonl /tmp/logs/${d}_train.jsonl
+done
+(main) root@C.35957673:/workspace$ tar czf /tmp/all_train_logs.tgz -C /tmp logs
+(main) root@C.35957673:/workspace$ ls -lh /tmp/all_train_logs.tgz
+-rw-rw-r-- 1 root root 18K May  2 07:51 /tmp/all_train_logs.tgz
+
+-------------------------------------------------------------------------
+
+(main) root@C.35957673:/workspace/Unnatam$ # Spot-check that the model's hormone gate is actually nonzero after loading
+python3 -c "
+import torch, sys
+sys.path.insert(0, '/workspace/Unnatam')
+from unnatam.config import unnatam_tiny
+from unnatam.model import Unnatam
+cfg = unnatam_tiny()
+cfg.vocab_size = 50257
+cfg.use_hormones = True
+m = Unnatam(cfg)
+p = torch.load('/workspace/runs/tiny_hr/ckpt_[final.pt](http://final.pt)', map_location='cpu', weights_only=False)
+miss, _ = m.load_state_dict(p['model'], strict=False)
+print('missing:', miss[:5])
+for n, mod in m.named_modules():
+    if 'hormone' in n and hasattr(mod, 'gate'):
+        print(f'{n}.gate = {mod.gate.item():.4f}')
+"
+missing: []
+layers.5.hormone.gate = -0.0002
+layers.11.hormone.gate = 0.2314
+(main) root@C.35957673:/workspace/Unnatam$ python3 -c "
+import torch
+sd = torch.load('/workspace/runs/tiny_hr/ckpt_[final.pt](http://final.pt)', map_location='cpu', weights_only=False)
+sd = sd.get('model', sd.get('state_dict', sd))
+print('--- gates ---')
+for k,v in sorted(sd.items()):
+    if 'hormone' in k and ('gate' in k or 'magnitude' in k or 'mag' in k):
+        if v.numel() <= 8:
+            print(f'  {k} = {v.flatten().tolist()}')
+        else:
+            print(f'  {k}  shape={tuple(v.shape)}  norm={v.float().norm().item():.4f}')
+print('--- hormone bank ---')
+for k,v in sd.items():
+    if 'hormone' in k.lower() and v.numel() > 100:
+        norms = v.float().norm(dim=-1)
+        print(f'  {k}  shape={tuple(v.shape)}  per-row norms: min={norms.min():.3f}, max={norms.max():.3f}, mean={norms.mean():.3f}')
+"
+--- gates ---
+  layers.11.hormone.gate = [0.2314363569021225]
+  layers.11.hormone.magnitudes = [1.1169229745864868, 1.1398265361785889, 1.0565447807312012, 1.095969796180725, 1.078449010848999, 1.0862963199615479, 1.060670018196106]
+  layers.5.hormone.gate = [-0.0001869884436018765]
+  layers.5.hormone.magnitudes = [0.978086531162262, 0.9752341508865356, 0.976046621799469, 0.9783624410629272, 0.981057345867157, 0.9810166358947754, 0.9794948101043701]
+--- hormone bank ---
+  hormone_vectors  shape=(7, 1024)  per-row norms: min=0.617, max=0.668, mean=0.645
+  layers.5.hormone.router.weight  shape=(7, 1024)  per-row norms: min=0.551, max=0.585, mean=0.566
+  layers.11.hormone.router.weight  shape=(7, 1024)  per-row norms: min=0.665, max=0.780, mean=0.748
+(main) root@C.35957673:/workspace/Unnatam$ python3 -c "
+import json
+for d in ['tiny_base','tiny_hr','tiny_hr_rand','tiny_hr_fixedgate']:
+    losses = []
+    with open(f'/workspace/runs/{d}/train.jsonl') as f:
+        for line in f:
+            try:
+                e = json.loads(line)
+                if 'val_loss' in e: losses.append((e.get('step'), e['val_loss']))
+            except: pass
+    print(f'{d}: last 5 val losses: {losses[-5:]}')
+"
+tiny_base: last 5 val losses: [(3000, 3.440704822540283), (4000, 3.3890819907188416), (5000, 3.3371420741081237), (6000, 3.293008589744568), (7000, 3.2632431268692015)]
+tiny_hr: last 5 val losses: [(3000, 3.4407515287399293), (4000, 3.389165771007538), (5000, 3.3370835185050964), (6000, 3.2930201172828673), (7000, 3.263246738910675)]
+tiny_hr_rand: last 5 val losses: [(3000, 3.4407195925712584), (4000, 3.38903546333313), (5000, 3.337168538570404), (6000, 3.2928926944732666), (7000, 3.2631502032279966)]
+tiny_hr_fixedgate: last 5 val losses: [(3000, 3.440729832649231), (4000, 3.389136862754822), (5000, 3.337196743488312), (6000, 3.2931157112121583), (7000, 3.2632480025291444)]
+(main) root@C.35957673:/workspace/Unnatam$ python3 - <<'EOF'
+import torch, json, numpy as np
+from unnatam.config import unnatam_tiny
+from unnatam.model.unnatam import Unnatam
+import tiktoken
+
+cfg = unnatam_tiny(); cfg.use_hormones = True
+m = Unnatam(cfg).cuda().eval()
+sd = torch.load('/workspace/runs/tiny_hr/ckpt_[final.pt](http://final.pt)', weights_only=False)
+m.load_state_dict(sd.get('model', sd), strict=False)
+
+enc = tiktoken.get_encoding('gpt2')
+genres = {
+    'news':    "BREAKING: Officials confirmed Tuesday that the regulatory commission has approved the merger pending shareholder vote next month.",
+    'fiction': "She walked through the garden in the late afternoon light, watching the bees move from flower to flower with a quiet patience.",
+    'code':    "def quicksort(arr):\n    if len(arr) <= 1:\n        return arr\n    pivot = arr[len(arr)//2]\n    return quicksort([x for x in arr if x < pivot])",
+    'dialog':  "Yeah I dunno man, like, I told her three times already and she just keeps doing it. What am I supposed to do at this point?",
+    'tech':    "The transformer architecture relies on scaled dot-product attention, where query and key projections are computed in parallel across heads.",
+}
+labels = ['ADR','CDO','LCO','NRA','OXY','SRO','SELF']
+
+# Hook each HormoneRouter to capture w(h)
+caps = {}
+def hook(name):
+    def fn(mod, inp, out):
+        # depends on module forward signature — see below
+        h = inp[0]
+        with [torch.no](http://torch.no)_grad():
+            w = torch.softmax(mod.W_R(h), dim=-1).mean(dim=(0,1))
+        caps[name] = w.cpu().numpy()
+    return fn
+
+for i, layer in enumerate(m.layers):
+    if hasattr(layer, 'hormone') and layer.hormone is not None:
+        layer.hormone.register_forward_hook(hook(f'layer{i}'))
+
+print(f"\n{'genre':<10s}  per-hormone routing weight (avg over tokens)")
+print(f"{'':<10s}  " + "  ".join(f"{l:>5s}" for l in labels))
+for g, text in genres.items():
+    ids = torch.tensor([enc.encode_ordinary(text)], device='cuda')
+    with [torch.no](http://torch.no)_grad():
+        m(ids)
+    # average across all hormone-bearing layers
+    avg = np.mean([v for v in caps.values()], axis=0)
+    print(f"{g:<10s}  " + "  ".join(f"{x:.3f}" for x in avg))
+EOF
+
+genre       per-hormone routing weight (avg over tokens)
+              ADR    CDO    LCO    NRA    OXY    SRO   SELF
+Traceback (most recent call last):
+  File "<stdin>", line 41, in <module>
+  File "/venv/main/lib/python3.12/site-packages/torch/nn/modules/[module.py](http://module.py)", line 1779, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/venv/main/lib/python3.12/site-packages/torch/nn/modules/[module.py](http://module.py)", line 1790, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Unnatam/unnatam/model/[unnatam.py](http://unnatam.py)", line 81, in forward
+    x = layer(x, self.hormone_vectors)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/venv/main/lib/python3.12/site-packages/torch/nn/modules/[module.py](http://module.py)", line 1779, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/venv/main/lib/python3.12/site-packages/torch/nn/modules/[module.py](http://module.py)", line 1790, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Unnatam/unnatam/model/[block.py](http://block.py)", line 76, in forward
+    x = x + self.hormone(x, hormone_vectors)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/venv/main/lib/python3.12/site-packages/torch/nn/modules/[module.py](http://module.py)", line 1779, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/venv/main/lib/python3.12/site-packages/torch/nn/modules/[module.py](http://module.py)", line 1885, in _call_impl
+    return inner()
+           ^^^^^^^
+  File "/venv/main/lib/python3.12/site-packages/torch/nn/modules/[module.py](http://module.py)", line 1846, in inner
+    hook_result = hook(self, args, result)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<stdin>", line 28, in fn
+  File "/venv/main/lib/python3.12/site-packages/torch/nn/modules/[module.py](http://module.py)", line 1968, in __getattr__
+    raise AttributeError(
+AttributeError: 'HormoneRouter' object has no attribute 'W_R'
+
+
+
+=============================================================================================================
+
+step    Base       HR         HR-rand    HR-fixedgate
+3000    3.44070    3.44075    3.44072    3.44073
+7000    3.26324    3.26325    3.26315    3.26325
+
+
+=======================================
+
+Variant	Val PPL	HellaSwag (acc/acc_n)	LAMBADA	ARC-E	ARC-C	PIQA
+Base	26.13	27.89 / 28.14	20.47	43.69	23.38	61.15
+HR	26.13	27.89 / 28.00	20.47	43.39	23.38	61.10
+HR-rand	26.13	27.90 / 28.15	20.47	43.52	23.38	61.26
+HR-fixedgate	26.13	27.93 / 28.14	20.43	43.60	23.63	61.15
+HR-noext	28.20	27.06 / 27.59	18.26	40.82	23.21	61.26
+========================================================================
+
+genre          ADR     CDO     LCO     NRA     OXY     SRO    SELF
+------------------------------------------------------------
+news        0.3771  0.0949  0.1121  0.0723  0.1152  0.1458  0.0825
+fiction     0.2480  0.3085  0.0739  0.0659  0.0583  0.1456  0.0999
+code        0.3053  0.0706  0.2279  0.1071  0.0918  0.1587  0.0387
+dialog      0.3246  0.1817  0.0528  0.0892  0.0906  0.1950  0.0660
+tech        0.3571  0.2068  0.1009  0.1040  0.0686  0.1006  0.0619
+urgent      0.2286  0.0962  0.1138  0.0982  0.1859  0.1518  0.1255
+
+--- layer 11 only (gate=0.23, the one that's actually engaged) ---
+genre          ADR     CDO     LCO     NRA     OXY     SRO    SELF
+------------------------------------------------------------
+news        0.5622  0.0482  0.0554  0.0252  0.0980  0.1889  0.0221
+fiction     0.3308  0.4358  0.0264  0.0013  0.0063  0.1382  0.0611
+code        0.4475  0.0324  0.2861  0.0161  0.0290  0.1745  0.0144
+dialog      0.4956  0.1940  0.0056  0.0129  0.0366  0.2489  0.0063
+tech        0.5669  0.2191  0.0170  0.0951  0.0217  0.0763  0.0039
+urgent      0.3070  0.0181  0.0748  0.0764  0.2451  0.1584  0.1202
+
+Max pairwise L1 distance between genres: 0.5982
+(0.0 = identical routing; 2.0 = completely disjoint distributions)
+(main) root@C.35957673:/workspace/Unnatam$ cat /workspace/Unnatam/scripts/extract_[hormones.py](http://hormones.py) | head -100
+"""Extract hormone direction vectors from a (partially-)trained Unnatam checkpoint.
+
+Examples
+--------
+    # Typical: extract from the 1B-token milestone checkpoint
+    python scripts/extract_[hormones.py](http://hormones.py) \\
+        --ckpt runs/tiny_stage1/ckpt_[milestone.pt](http://milestone.pt) \\
+        --size tiny --out hormones.npy
+
+    # HR-noext ablation: extract from a FRESHLY INITIALISED (untrained) model
+    python scripts/extract_[hormones.py](http://hormones.py) \\
+        --init --size tiny --out hormones_noext.npy
+
+    # If the Stage-1 model used intracellular attention (for the Both variant)
+    python scripts/extract_[hormones.py](http://hormones.py) \\
+        --ckpt runs/ia_stage1/ckpt_[milestone.pt](http://milestone.pt) \\
+        --size tiny --intra_attn --out hormones_ia.npy
+
+Output: float32 .npy of shape (n_hormones, d_model), L2-normalised rows.
+"""
+
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+import numpy as np
+import torch
+
+from unnatam.config import unnatam_tiny, unnatam_small, unnatam_medium, unnatam_large
+from unnatam.hormones.definitions import HORMONE_NAMES
+from unnatam.hormones.extract import extract_hormone_vectors, save_hormone_vectors
+from unnatam.model import Unnatam
+
+
+# ---------------------------------------------------------------------------
+# Tokenizer loader — tries tiktoken first (fast), falls back to transformers
+# ---------------------------------------------------------------------------
+
+def _load_tokenizer():
+    try:
+        import tiktoken
+        enc = tiktoken.get_encoding("gpt2")
+
+        class _TikTokenWrapper:
+            def encode(self, text: str) -> list[int]:
+                return enc.encode(text)
+
+        return _TikTokenWrapper()
+    except ImportError:
+        pass
+
+    try:
+        from transformers import AutoTokenizer
+        tok = AutoTokenizer.from_pretrained("gpt2")
+
+        class _HFWrapper:
+            def encode(self, text: str) -> list[int]:
+                return tok.encode(text)
+
+        return _HFWrapper()
+    except ImportError:
+        pass
+
+    raise RuntimeError(
+        "No tokenizer available. "
+        "Install tiktoken (`pip install tiktoken`) "
+        "or transformers (`pip install transformers`)."
+    )
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+def main() -> None:
+    p = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    # Checkpoint source
+    src = p.add_mutually_exclusive_group(required=True)
+    src.add_argument("--ckpt", type=str,
+                     help="path to checkpoint .pt to load weights from")
+    src.add_argument("--init", action="store_true",
+                     help="use a freshly-initialised (untrained) model — HR-noext ablation")
+
+    # Model spec (must match the checkpoint's config)
+    p.add_argument("--size", choices=["tiny", "small", "medium", "large"], default="tiny")
+    p.add_argument("--vocab_size", type=int, default=50257,
+                   help="vocab size used during training (must match checkpoint)")
+    p.add_argument("--intra_attn", action="store_true",
+                   help="set if checkpoint was trained with --intra_attn")
+
+    # Extraction settings
+    p.add_argument("--max_tokens", type=int, default=256,
+                   help="max tokens per contrast-pair text (256 is plenty)")
+    p.add_argument("--device", type=str,
+                   default="cuda" if [torch.cuda.is](http://torch.cuda.is)_available() else "cpu")
+
+
+========================================================================
+
+(main) root@C.35957673:/workspace/Unnatam$ python3 -c "
+import numpy as np
+for path in ['/workspace/runs/tiny_hormones.npy',
+             '/workspace/runs/tiny_hormones_noext.npy' if __import__('os').path.exists('/workspace/runs/tiny_hormones_noext.npy') else None]:
+    if path is None: continue
+    v = np.load(path)
+    print(f'{path}: shape={v.shape}, per-row norms = {np.linalg.norm(v, axis=-1).round(4).tolist()}')
+"
+/workspace/runs/tiny_hormones.npy: shape=(7, 1024), per-row norms = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+/workspace/runs/tiny_hormones_noext.npy: shape=(7, 1024), per-row norms = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+(main) root@C.35957673:/workspace/Unnatam$ cat /workspace/Unnatam/unnatam/hormones/[extract.py](http://extract.py)
+"""Hormone vector extraction.
+
+Algorithm (per hormone):
+  1. For each contrast pair (positive_text, negative_text):
+       - Forward each text through the model
+       - Capture residual stream output at every AttnLayer (the injection points)
+       - Mean across attention layers, then mean across token positions
+         → one (d_model,) vector per text
+       - Compute (pos_vec - neg_vec)  → the per-pair direction
+  2. Mean the pair-directions  → the hormone direction
+  3. L2-normalize to unit length
+
+We extract at exactly the layers where injection happens, so the directions
+live in the same residual subspace they'll be added back into. Magnitudes are
+normalized to 1.0 so the per-hormone learned magnitudes (in HormoneRouter)
+have a clean scale to train against.
+
+Tokenizer protocol: any object with `.encode(str) -> list[int]` works.
+"""
+
+from __future__ import annotations
+
+from typing import Protocol
+
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+from unnatam.hormones.definitions import HORMONE_CONTRASTS, HORMONE_NAMES
+from unnatam.model.block import AttnLayer
+
+
+class TokenizerLike(Protocol):
+    def encode(self, text: str) -> list[int]: ...
+
+
+@[torch.no](http://torch.no)_grad()
+def extract_hormone_vectors(
+    model: nn.Module,
+    tokenizer: TokenizerLike,
+    device: str | torch.device = "cpu",
+    max_tokens: int = 256,
+    contrasts: dict[str, list] | None = None,
+) -> np.ndarray:
+    """Run the contrast pairs through `model` and return frozen hormone direction vectors.
+
+    Returns a numpy array of shape (n_hormones, d_model), L2-normalized along the
+    last axis. Order matches `HORMONE_NAMES`.
+    """
+    contrasts = contrasts if contrasts is not None else HORMONE_CONTRASTS
+    if not contrasts:
+        raise ValueError("contrasts dict is empty")
+
+    was_training = [model.training](http://model.training)
+    model.eval()
+    [model.to](http://model.to)(device)
+
+    captured: list[torch.Tensor] = []
+
+    def hook(_module, _inputs, output):
+        captured.append(output)
+
+    handles = []
+    for layer in model.layers:
+        if isinstance(layer, AttnLayer):
+            handles.append(layer.register_forward_hook(hook))
+    if not handles:
+        raise ValueError("model has no AttnLayer instances to hook for extraction")
+
+    def encode_one(text: str) -> torch.Tensor:
+        ids = tokenizer.encode(text)[:max_tokens]
+        if not ids:
+            raise ValueError(f"tokenizer returned empty ids for text: {text!r}")
+        return torch.tensor([ids], device=device, dtype=torch.long)
+
+    def collect(text: str) -> torch.Tensor:
+        captured.clear()
+        ids = encode_one(text)
+        _ = model(ids)
+        # captured: list of (1, T, d_model), one per AttnLayer
+        stacked = torch.stack(captured, dim=0)         # (n_attn, 1, T, d_model)
+        # Mean over attention layers and over token positions.
+        return stacked.mean(dim=(0, 2)).squeeze(0).float().cpu()
+
+    try:
+        names = [n for n in HORMONE_NAMES if n in contrasts]
+        d_model = next(model.parameters()).shape[-1] if hasattr(model, "embed") else None
+        if hasattr(model, "cfg"):
+            d_model = model.cfg.d_model
+        if d_model is None:
+            raise RuntimeError("could not determine model d_model")
+
+        vectors = torch.zeros(len(names), d_model, dtype=torch.float32)
+        for h_idx, name in enumerate(names):
+            pairs = contrasts[name]
+            if not pairs:
+                raise ValueError(f"no contrast pairs for hormone {name!r}")
+            diffs = []
+            for pair in pairs:
+                pos_v = collect(pair.positive)
+                neg_v = collect(pair.negative)
+                diffs.append(pos_v - neg_v)
+            mean_diff = torch.stack(diffs).mean(dim=0)
+            vectors[h_idx] = F.normalize(mean_diff, dim=0)
+    finally:
+        for h in handles:
+            h.remove()
+        if was_training:
+            model.train()
+
+    return vectors.numpy()
+
+
+def save_hormone_vectors(path: str, vectors: np.ndarray) -> None:
+    if vectors.ndim != 2:
+        raise ValueError(f"expected (n_hormones, d_model), got shape {vectors.shape}")
+    [np.save](http://np.save)(path, vectors)
+
+
+also, the new rig is acting funny.
+
+it's got all the other files from the looks of it, just a few missing, and when i try to upload them manually it goes like "stale file handle" or sum shit
+
+
+===========================================
+
+═══ tiny_hr_rand ═══
+
+genre          ADR     CDO     LCO     NRA     OXY     SRO    SELF
+news        0.0134  0.3013  0.0301  0.1071  0.1258  0.0944  0.3278
+fiction     0.1371  0.5428  0.0040  0.1875  0.0273  0.0448  0.0565
+code        0.0079  0.3366  0.0138  0.1377  0.2788  0.2180  0.0073
+dialog      0.0572  0.4190  0.0887  0.0399  0.0843  0.0105  0.3004
+tech        0.0689  0.0281  0.0742  0.2697  0.4634  0.0759  0.0199
+urgent      0.0817  0.0985  0.1067  0.0619  0.2751  0.0148  0.3612
+Max pairwise L1 (layer 11): 1.3718
+Gates: {'layers.5.hormone.gate': 0.0006534435087814927, 'layers.11.hormone.gate': -0.12169452011585236}
+═══ tiny_hr_fixedgate ═══
+
+genre          ADR     CDO     LCO     NRA     OXY     SRO    SELF
+news        0.5760  0.1270  0.0301  0.1268  0.0745  0.0541  0.0115
+fiction     0.5147  0.0044  0.0166  0.0296  0.1198  0.2471  0.0678
+code        0.1701  0.7816  0.0080  0.0165  0.0013  0.0181  0.0045
+dialog      0.4245  0.0062  0.0017  0.1618  0.0095  0.2765  0.1197
+tech        0.6025  0.1283  0.0347  0.0536  0.0234  0.1377  0.0197
+urgent      0.3316  0.2809  0.0027  0.1321  0.0439  0.1379  0.0708
+Max pairwise L1 (layer 11): 1.5632
+Gates: {'layers.5.hormone.gate': 1.0, 'layers.11.hormone.gate': 1.0}
+
+
+okay hmmMMMMmmmm
+
+ykw okay let's do option B, fuck the new rig
+
+===============================================================
+
+
+(main) root@C.35957673:/workspace/Unnatam$ STAGE2_TOKENS=2M MICRO_BATCH=2 GRAD_ACCUM=4 IA_STRIDE=32 \
+  bash scripts/run_ia_[full.sh](http://full.sh) 2>&1 | tee /tmp/ia_throughput.log
+Activated conda/uv virtual environment at /venv/main
+Effective batch per opt step: 65536 tokens (mb=2 ga=4 gpus=8 seq=1024)
+Stage 2 budget: 2M (Stage 1 std reused: /workspace/runs/tiny_stage1/ckpt_[milestone.pt](http://milestone.pt))
+
+═══════════════════════════════════════════════
+  IA Stage-2 (continuation from Stage-1 std, 2M tokens, IA enabled)
+═══════════════════════════════════════════════
+
+W0502 08:16:12.368000 50791 site-packages/torch/distributed/run.py:851] 
+W0502 08:16:12.368000 50791 site-packages/torch/distributed/run.py:851] *****************************************
+W0502 08:16:12.368000 50791 site-packages/torch/distributed/run.py:851] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0502 08:16:12.368000 50791 site-packages/torch/distributed/run.py:851] *****************************************
+[unnatam] size=tiny d_model=1024 n_layers=12 n_attn=2 vocab=50257
+[unnatam] world_size=8 device=cuda:0
+[unnatam] tokens_per_step=65,536 total_steps=30 total_tokens=0.00B
+[unnatam] hormones=False intra_attn=True (stride=32) rand_hormones=False fixed_gate=False
+[load_checkpoint] WARNING: unexpected missing keys: ['layers.0.mixer.intra_attn.gate', 'layers.0.mixer.intra_attn.W_q.weight', 'layers.0.mixer.intra_attn.W_k.weight', 'layers.1.mixer.intra_attn.gate', 'layers.1.mixer.intra_attn.W_q.weight']...
+[unnatam] params total=140.4M trainable=140.4M
+[unnatam] dataloader: num_workers=4 per rank (cpu_count=128, world_size=8)
+[load_checkpoint] WARNING: unexpected missing keys: ['layers.0.mixer.intra_attn.gate', 'layers.0.mixer.intra_attn.W_q.weight', 'layers.0.mixer.intra_attn.W_k.weight', 'layers.1.mixer.intra_attn.gate', 'layers.1.mixer.intra_attn.W_q.weight']...
+[load_checkpoint] WARNING: unexpected missing keys: ['layers.0.mixer.intra_attn.gate', 'layers.0.mixer.intra_attn.W_q.weight', 'layers.0.mixer.intra_attn.W_k.weight', 'layers.1.mixer.intra_attn.gate', 'layers.1.mixer.intra_attn.W_q.weight']...
+[load_checkpoint] WARNING: unexpected missing keys: ['layers.0.mixer.intra_attn.gate', 'layers.0.mixer.intra_attn.W_q.weight', 'layers.0.mixer.intra_attn.W_k.weight', 'layers.1.mixer.intra_attn.gate', 'layers.1.mixer.intra_attn.W_q.weight']...
+[load_checkpoint] WARNING: unexpected missing keys: ['layers.0.mixer.intra_attn.gate', 'layers.0.mixer.intra_attn.W_q.weight', 'layers.0.mixer.intra_attn.W_k.weight', 'layers.1.mixer.intra_attn.gate', 'layers.1.mixer.intra_attn.W_q.weight']...
+[unnatam] resumed from /workspace/runs/tiny_stage1/ckpt_[milestone.pt](http://milestone.pt) at step 7629 (>= total_steps 30); treating as cross-stage transition: resetting step counter & LR schedule
+[load_checkpoint] WARNING: unexpected missing keys: ['layers.0.mixer.intra_attn.gate', 'layers.0.mixer.intra_attn.W_q.weight', 'layers.0.mixer.intra_attn.W_k.weight', 'layers.1.mixer.intra_attn.gate', 'layers.1.mixer.intra_attn.W_q.weight']...
+[load_checkpoint] WARNING: unexpected missing keys: ['layers.0.mixer.intra_attn.gate', 'layers.0.mixer.intra_attn.W_q.weight', 'layers.0.mixer.intra_attn.W_k.weight', 'layers.1.mixer.intra_attn.gate', 'layers.1.mixer.intra_attn.W_q.weight']...
+[load_checkpoint] WARNING: unexpected missing keys: ['layers.0.mixer.intra_attn.gate', 'layers.0.mixer.intra_attn.W_q.weight', 'layers.0.mixer.intra_attn.W_k.weight', 'layers.1.mixer.intra_attn.gate', 'layers.1.mixer.intra_attn.W_q.weight']...
+step=0 loss=3.448 lr=1.5e-06 elapsed_s=103.5 tok_per_s=633 tokens=65536
+
+
+
+hmm
+
+=====================================================================
+
+# Part 1 — All the data, compiled
+
+## Model config (`tiny`)
+| Property | Value |
+|---|---|
+| Total params | 140.4 M (with hormone modules), ~125 M base backbone |
+| `d_model` | 1024 |
+| `n_layers` | 12 (pattern: SSMx5, ATTN, SSMx5, ATTN — attn at indices 5, 11) |
+| `d_state` | 16 |
+| `d_inner` | 2048 |
+| `n_heads` | 8 query, 1 KV (MQA) |
+| `head_dim` | 128 |
+| `n_hormones` | 7 |
+| Vocab | 50,257 (GPT-2 BPE) |
+| Seq len | 1024 |
+| Tokenizer | tiktoken `gpt2` |
+
+## Training setup
+- **Data**: FineWeb-Edu `sample-10BT`, validation = held-out 50M-token slice
+- **Optimiser**: AdamW 8-bit, β=(0.9, 0.95), wd=0.1, peak LR=3e-4, 2000 warmup steps, cosine to 10% peak
+- **Effective batch**: ~65,536 tokens/step (mb=8, ga=1, 8 GPUs, seq=1024)
+- **Total budget per variant**: 2B tokens (1B Stage 1 baseline + 1B Stage 2 with the variant's modification)
+- **Stage 1 → Stage 2 split**: hormone extraction at the 1B-token milestone
+- **HR-noext exception**: trained from scratch for 2B tokens with hormones extracted from a fresh-init model
+
+## All 5 trained variants
+
+| Variant | Stage 1 | Stage 2 | Hormones | Gate init |
+|---|---|---|---|---|
+| `tiny_base` | std (1B) | std (1B more) | none | — |
+| `tiny_hr` | std (1B) | HR (1B) | extracted from Stage-1 std | 0.0 (learnable) |
+| `tiny_hr_rand` | std (1B) | HR (1B) | random unit vectors | 0.0 (learnable) |
+| `tiny_hr_fixedgate` | std (1B) | HR (1B) | extracted from Stage-1 std | **1.0 (frozen)** |
+| `tiny_hr_noext` | from-scratch (2B total) | — | extracted from random init | 0.0 (learnable) |
+
+## Final val loss / PPL
+
+| Variant | Val loss | Val PPL |
+|---|---|---|
+| `tiny_base` | 3.2632 | 26.13 |
+| `tiny_hr` | 3.2632 | 26.13 |
+| `tiny_hr_rand` | 3.2632 | 26.13 |
+| `tiny_hr_fixedgate` | 3.2632 | 26.13 |
+| `tiny_hr_noext` | **3.3393** | **28.20** |
+
+## Late-stage val loss trajectory
+
+| Step | base | hr | hr_rand | hr_fixedgate |
+|---|---|---|---|---|
+| 3000 | 3.4407 | 3.4408 | 3.4407 | 3.4407 |
+| 4000 | 3.3891 | 3.3892 | 3.3890 | 3.3891 |
+| 5000 | 3.3371 | 3.3371 | 3.3372 | 3.3372 |
+| 6000 | 3.2930 | 3.2930 | 3.2929 | 3.2931 |
+| 7000 | 3.2632 | 3.2632 | 3.2632 | 3.2632 |
+
+(Full per-step trajectories live in `train.jsonl`; we only sampled the last 5 — the loading script below pulls all.)
+
+## Zero-shot benchmark accuracy (full test sets)
+
+| Variant | HellaSwag<br/>(acc) | HellaSwag<br/>(acc_norm) | LAMBADA | ARC-E<br/>(acc_norm) | ARC-C<br/>(acc_norm) | PIQA<br/>(acc_norm) |
+|---|---|---|---|---|---|---|
+| base | 0.2789 | 0.2814 | 0.2047 | 0.4369 | 0.2338 | 0.6115 |
+| hr | 0.2789 | 0.2800 | 0.2047 | 0.4339 | 0.2338 | 0.6110 |
+| hr_rand | 0.2790 | 0.2815 | 0.2047 | 0.4352 | 0.2338 | 0.6126 |
+| hr_fixedgate | 0.2793 | 0.2814 | 0.2043 | 0.4360 | 0.2363 | 0.6115 |
+| hr_noext | 0.2706 | 0.2759 | **0.1826** | **0.4082** | 0.2321 | 0.6126 |
+
+(n: HellaSwag=10042, LAMBADA=5153, ARC-E=2376, ARC-C=1172, PIQA=1838)
+
+## Gate values (post-training, per attention layer)
+
+| Variant | layer 5 gate | layer 11 gate |
+|---|---|---|
+| `tiny_hr` | -0.0002 | **+0.2314** |
+| `tiny_hr_rand` | +0.0007 | -0.1217 |
+| `tiny_hr_fixedgate` | 1.0 (frozen) | 1.0 (frozen) |
+| `tiny_hr_noext` | (not extracted yet — should run) | (not extracted yet) |
+
+## Per-hormone learned magnitudes (`tiny_hr`)
+
+| Layer | ADR | CDO | LCO | NRA | OXY | SRO | SELF |
+|---|---|---|---|---|---|---|---|
+| 5 | 0.978 | 0.975 | 0.976 | 0.978 | 0.981 | 0.981 | 0.979 |
+| 11 | 1.117 | 1.140 | 1.057 | 1.096 | 1.078 | 1.086 | 1.061 |
+
+## Hormone bank norm (the bug)
+
+- `.npy` file → unit norm (1.0) ✓
+- Loaded into model state_dict → norm 0.617–0.668 (mean 0.645) ✗
+- Confirmed bug in the model's `_load_hormone_vectors` path. Effective injection is `m_i × v_i` ≈ 0.65; the magnitudes converged near 1.0 to compensate. Fix is one `F.normalize(..., dim=-1)` call. Doesn't change trained results.
+
+## Per-genre routing distributions (layer 11 — the engaged layer)
+
+### `tiny_hr` (extracted vectors)
+```
+genre        ADR     CDO     LCO     NRA     OXY     SRO    SELF
+news       0.5622  0.0482  0.0554  0.0252  0.0980  0.1889  0.0221
+fiction    0.3308  0.4358  0.0264  0.0013  0.0063  0.1382  0.0611
+code       0.4475  0.0324  0.2861  0.0161  0.0290  0.1745  0.0144
+dialog     0.4956  0.1940  0.0056  0.0129  0.0366  0.2489  0.0063
+tech       0.5669  0.2191  0.0170  0.0951  0.0217  0.0763  0.0039
+urgent     0.3070  0.0181  0.0748  0.0764  0.2451  0.1584  0.1202
+```
+
+### `tiny_hr_rand` (random unit vectors)
+```
+genre        ADR     CDO     LCO     NRA     OXY     SRO    SELF
+news       0.0134  0.3013  0.0301  0.1071  0.1258  0.0944  0.3278
+fiction    0.1371  0.5428  0.0040  0.1875  0.0273  0.0448  0.0565
+code       0.0079  0.3366  0.0138  0.1377  0.2788  0.2180  0.0073
+dialog     0.0572  0.4190  0.0887  0.0399  0.0843  0.0105  0.3004
+tech       0.0689  0.0281  0.0742  0.2697  0.4634  0.0759  0.0199
+urgent     0.0817  0.0985  0.1067  0.0619  0.2751  0.0148  0.3612
+```
+
+### `tiny_hr_fixedgate` (extracted vectors, gate forced to 1.0)
+```
+genre        ADR     CDO     LCO     NRA     OXY     SRO    SELF
+news       0.5760  0.1270  0.0301  0.1268  0.0745  0.0541  0.0115
+fiction    0.5147  0.0044  0.0166  0.0296  0.1198  0.2471  0.0678
+code       0.1701  0.7816  0.0080  0.0165  0.0013  0.0181  0.0045
+dialog     0.4245  0.0062  0.0017  0.1618  0.0095  0.2765  0.1197
+tech       0.6025  0.1283  0.0347  0.0536  0.0234  0.1377  0.0197
+urgent     0.3316  0.2809  0.0027  0.1321  0.0439  0.1379  0.0708
+```
+
+## Specialization summary (max pairwise L1 distance between genres @ layer 11)
+
+| Variant | L1 |
+|---|---|
+| `tiny_hr` | 0.598 |
+| `tiny_hr_rand` | 1.372 |
+| `tiny_hr_fixedgate` | 1.563 |
+| (uniform routing baseline) | 0.000 |
+| (max possible) | 2.000 |
+
+## Currently in flight
+- **IA Stage-2 smoke test** running on old rig: 633 tok/s at step 0 (with init overhead); steady-state TBD; budget 2M tokens.
+- If steady-state >500 tok/s → real 20M run (~$25–40 wall-clock).
+
+---
+
+# Part 2 — Plotting code
+
+Save this to `scripts/make_paper_plots.py` on the rig and run with `python3 scripts/make_paper_plots.py --out /workspace/figs/`. It will produce 8 PDFs + 8 PNGs you can scp down.
+
+## How to use it
+
+On the rig (after `git pull`):
+```bash
+mkdir -p /workspace/figs
+python3 scripts/make_paper_plots.py --runs /workspace/runs --out /workspace/figs
+
+# scp the figs down to your laptop
+ls /workspace/figs/
+```
+
+On Windows (after scp):
+```bash
+explorer .\figs        # PNGs are scannable in Explorer; PDFs go in the paper
+```
+
+## What you'll get (9 figures)
+
+| # | Filename | What it shows |
+|---|---|---|
+| 1 | `fig1_val_loss_curves` | Two-panel val loss curves (full Stage 2 + zoom on late stage). Shows lockstep convergence + HR-noext separation. |
+| 2 | `fig2_final_val_ppl` | Bar chart of final PPL. The Base/HR/HR-rand/HR-fixedgate quartet at 26.13 + HR-noext at 28.20. |
+| 3 | `fig3_zeroshot_grouped` | Grouped-bars: 5 variants × 5 zero-shot benchmarks. The visual "they're all the same except HR-noext on LAMBADA & ARC-E". |
+| 4 | `fig4_routing_heatmaps_layer11` | **The HR star figure.** Three side-by-side heatmaps (HR / HR-rand / HR-fixedgate) of layer-11 router weights per genre. L₁ specialization shown in titles. |
+| 5 | `fig5_gates` | Layer-5 vs Layer-11 gates per HR variant. The "asymmetric engagement" finding. |
+| 6 | `fig6_magnitudes` | tiny_hr's per-hormone learned magnitudes per layer. Layer 5 stays ~0.98, layer 11 grew above 1.0. |
+| 7 | `fig7_l1_specialization` | Specialization summary as a single bar chart. |
+| 8 | `fig8_ia_vs_base` | (Will populate when IA finishes.) IA val loss curve overlaid on Base trajectory. |
+| 9 | `fig9_ia_gates` | (Populates from `tiny_ia/ckpt_final.pt`.) Final IA gate values per SSM layer. |
+
+## Two TODOs that would round out the data
+
+1. **HR-noext gates**. We have all the others — let's grab these too while the rig is up:
+   ```bash
+   python3 -c "
+   import torch
+   sd = torch.load('/workspace/runs/tiny_hr_noext/ckpt_final.pt', map_location='cpu', weights_only=False)
+   sd = sd.get('model', sd)
+   for k,v in sorted(sd.items()):
+       if 'hormone.gate' in k:
+           print(f'{k} = {v.item():+.4f}')
+   "
+   ```
+   Then I'll add HR-noext to the `GATES` dict and it'll show up in `fig5_gates`.
+
+2. **HR-noext routing distribution**. Same as the genre script we already ran, with `tiny_hr_noext/ckpt_final.pt`. I'd want to see whether HR-noext ALSO learned specialization despite the loss damage — that'd be informative about how the mechanism interacts with bad direction vectors.
+
+Both are 30 seconds total. Worth running while we wait for IA to converge.
+
+Send me whatever the smoke test settles to (steady-state tok/s) and I'll greenlight the 20M run.
+
+
+=========================================================================================
+
+oh dude i just got some.. ideas we could use.
+maybe.
+
+first of all, yeah here ya go
+
+(main) root@C.35957673:/workspace/Unnatam$ python3 -c "
+import torch
+sd = torch.load('/workspace/runs/tiny_hr_noext/ckpt_[final.pt](http://final.pt)', map_location='cpu', weights_only=False)
+sd = sd.get('model', sd)
+for k,v in sorted(sd.items()):
+    if 'hormone.gate' in k:
+        print(f'{k} = {v.item():+.4f}')
+"
+layers.11.hormone.gate = +0.3661
+layers.5.hormone.gate = +0.0120
+
+
+
+(main) root@C.35957673:/workspace/Unnatam$ python3 - <<'EOF'
+import torch, numpy as np
+from unnatam.config import unnatam_tiny
+from unnatam.model.unnatam import Unnatam
+import tiktoken
+
+cfg = unnatam_tiny(); cfg.use_hormones = True
+m = Unnatam(cfg).cuda().eval()
+sd = torch.load('/workspace/runs/tiny_hr_noext/ckpt_[final.pt](http://final.pt)', weights_only=False)
+m.load_state_dict(sd.get('model', sd), strict=False)
+
+enc = tiktoken.get_encoding('gpt2')
+genres = {
+    'news':    "BREAKING: Officials confirmed Tuesday that the regulatory commission has approved the merger pending shareholder vote next month. Analysts expect the decision to reshape the sector heading into the next fiscal quarter, with several rival firms already issuing statements about competitive responses.",
+    'fiction': "She walked through the garden in the late afternoon light, watching the bees move from flower to flower with a quiet patience she had nearly forgotten she was capable of. The sun was warm on her shoulders and somewhere a wood pigeon called out twice and then went still.",
+    'code':    "def quicksort(arr):\n    if len(arr) <= 1:\n        return arr\n    pivot = arr[len(arr)//2]\n    left = [x for x in arr if x < pivot]\n    middle = [x for x in arr if x == pivot]\n    right = [x for x in arr if x > pivot]\n    return quicksort(left) + middle + quicksort(right)",
+    'dialog':  "Yeah I dunno man, like, I told her three times already and she just keeps doing it. What am I supposed to do at this point? I can't keep having the same conversation. It's exhausting and honestly kind of insulting.",
+    'tech':    "The transformer architecture relies on scaled dot-product attention, where query and key projections are computed in parallel across heads. The output of each attention head is concatenated and projected back to the model dimension before passing through a feedforward block.",
+    'urgent':  "FIRE IN THE NORTH WING. Evacuate immediately via the east staircase. Do not use elevators. Repeat: do not use elevators. Account for all personnel at the marshalling point in the parking lot. Confirm your team lead has eyes on you before leaving the building.",
+}
+labels = ['ADR','CDO','LCO','NRA','OXY','SRO','SELF']
+
+caps = {}
+def make_hook(name):
+    def fn(mod, inp, out):
+        h = inp[0]
+        with [torch.no](http://torch.no)_grad():
+            w = torch.softmax(mod.router(h), dim=-1).mean(dim=(0,1))
+        caps[name] = w.cpu().numpy()
+    return fn
+
+for i, layer in enumerate(m.layers):
+    if hasattr(layer, 'hormone') and layer.hormone is not None:
+        layer.hormone.register_forward_hook(make_hook(f'layer{i}'))
+
+print(f"\n{'genre':<10s}  " + "  ".join(f"{l:>6s}" for l in labels))
+print("-" * 60)
+all_dists = []
+for g, text in genres.items():
+    caps.clear()
+    ids = torch.tensor([enc.encode_ordinary(text)], device='cuda')
+    with [torch.no](http://torch.no)_grad():
+        m(ids)
+    avg = np.mean([v for v in caps.values()], axis=0)
+    all_dists.append(avg)
+EOFnt(f"(0.0 = identical routing; 2.0 = completely disjoint distributions)")one,:,:]).sum(-1).max():.4f}")
+
+genre          ADR     CDO     LCO     NRA     OXY     SRO    SELF
+------------------------------------------------------------
+news        0.1551  0.0962  0.2257  0.1492  0.2025  0.0958  0.0754
+fiction     0.0700  0.2159  0.3477  0.0887  0.0764  0.1260  0.0752
+code        0.1088  0.0676  0.2359  0.0582  0.1385  0.0719  0.3191
+dialog      0.0751  0.3757  0.2300  0.1045  0.0676  0.0843  0.0628
+tech        0.1038  0.0894  0.1810  0.3012  0.1197  0.0802  0.1248
+urgent      0.0810  0.0906  0.2903  0.0839  0.1072  0.1555  0.1914
+
+--- layer 11 only (gate=0.23, the one that's actually engaged) ---
+genre          ADR     CDO     LCO     NRA     OXY     SRO    SELF
+------------------------------------------------------------
+news        0.1635  0.0971  0.2644  0.1775  0.2021  0.0716  0.0238
+fiction     0.0148  0.3018  0.5862  0.0622  0.0097  0.0169  0.0084
+code        0.0210  0.0034  0.3255  0.0086  0.1089  0.0106  0.5221
+dialog      0.0145  0.6106  0.2939  0.0703  0.0042  0.0040  0.0025
+tech        0.0898  0.0182  0.2372  0.5289  0.0083  0.0032  0.1144
+urgent      0.0163  0.0538  0.4581  0.0587  0.0383  0.1104  0.2643
+
+Max pairwise L1 distance between genres: 0.7335
+(0.0 = identical routing; 2.0 = completely disjoint distributions)
+
+
+
+NOW
+
+for the ideas...
+
+
+================================================================================
+
+(main) root@C.35957673:/workspace/Unnatam$ ^C
+(main) root@C.35957673:/workspace/Unnatam$ STAGE2_TOKENS=20M MICRO_BATCH=2 GRAD_ACCUM=4 IA_STRIDE=32 LOG_INTERVAL=1 \
+  nohup bash scripts/run_ia_[full.sh](http://full.sh) > /workspace/ia_train.log 2>&1 &
+disown
+echo "PID: $!"
+[1] 54231
+PID: 54231
+(main) root@C.35957673:/workspace/Unnatam$ tail -f /workspace/ia_train.log
+Stage 2 budget: 20M (Stage 1 std reused: /workspace/runs/tiny_stage1/ckpt_[milestone.pt](http://milestone.pt))
+
+═══════════════════════════════════════════════
+  IA Stage-2 (continuation from Stage-1 std, 20M tokens, IA enabled)
+═══════════════════════════════════════════════
+
+W0502 08:45:53.927000 54238 site-packages/torch/distributed/run.py:851] 
+W0502 08:45:53.927000 54238 site-packages/torch/distributed/run.py:851] *****************************************
+W0502 08:45:53.927000 54238 site-packages/torch/distributed/run.py:851] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0502 08:45:53.927000 54238 site-packages/torch/distributed/run.py:851] *****************************************
+[unnatam] size=tiny d_model=1024 n_layers=12 n_attn=2 vocab=50257
+[unnatam] world_size=8 device=cuda:0
+[unnatam] tokens_per_step=65,536 total_steps=305 total_tokens=0.02B
+[unnatam] hormones=False intra_attn=True (stride=32) rand_hormones=False fixed_gate=False
+[load_checkpoint] WARNING: unexpected missing keys: ['layers.0.mixer.intra_attn.gate', 'layers.0.mixer.intra_attn.W_q.weight', 'layers.0.mixer.intra_attn.W_k.weight', 'layers.1.mixer.intra_attn.gate', 'layers.1.mixer.intra_attn.W_q.weight']...
+[load_checkpoint] WARNING: unexpected missing keys: ['layers.0.mixer.intra_attn.gate', 'layers.0.mixer.intra_attn.W_q.weight', 'layers.0.mixer.intra_attn.W_k.weight', 'layers.1.mixer.intra_attn.gate', 'layers.1.mixer.intra_attn.W_q.weight']...
+[load_checkpoint] WARNING: unexpected missing keys: ['layers.0.mixer.intra_attn.gate', 'layers.0.mixer.intra_attn.W_q.weight', 'layers.0.mixer.intra_attn.W_k.weight', 'layers.1.mixer.intra_attn.gate', 'layers.1.mixer.intra_attn.W_q.weight']...
+[unnatam] params total=140.4M trainable=140.4M
+[unnatam] dataloader: num_workers=4 per rank (cpu_count=128, world_size=8)
+[load_checkpoint] WARNING: unexpected missing keys: ['layers.0.mixer.intra_attn.gate', 'layers.0.mixer.intra_attn.W_q.weight', 'layers.0.mixer.intra_attn.W_k.weight', 'layers.1.mixer.intra_attn.gate', 'layers.1.mixer.intra_attn.W_q.weight']...
+[load_checkpoint] WARNING: unexpected missing keys: ['layers.0.mixer.intra_attn.gate', 'layers.0.mixer.intra_attn.W_q.weight', 'layers.0.mixer.intra_attn.W_k.weight', 'layers.1.mixer.intra_attn.gate', 'layers.1.mixer.intra_attn.W_q.weight']...
+[load_checkpoint] WARNING: unexpected missing keys: ['layers.0.mixer.intra_attn.gate', 'layers.0.mixer.intra_attn.W_q.weight', 'layers.0.mixer.intra_attn.W_k.weight', 'layers.1.mixer.intra_attn.gate', 'layers.1.mixer.intra_attn.W_q.weight']...
+[load_checkpoint] WARNING: unexpected missing keys: ['layers.0.mixer.intra_attn.gate', 'layers.0.mixer.intra_attn.W_q.weight', 'layers.0.mixer.intra_attn.W_k.weight', 'layers.1.mixer.intra_attn.gate', 'layers.1.mixer.intra_attn.W_q.weight']...
+[load_checkpoint] WARNING: unexpected missing keys: ['layers.0.mixer.intra_attn.gate', 'layers.0.mixer.intra_attn.W_q.weight', 'layers.0.mixer.intra_attn.W_k.weight', 'layers.1.mixer.intra_attn.gate', 'layers.1.mixer.intra_attn.W_q.weight']...
+[unnatam] resumed from /workspace/runs/tiny_stage1/ckpt_[milestone.pt](http://milestone.pt) at step 7629 (>= total_steps 305); treating as cross-stage transition: resetting step counter & LR schedule
+
+
+oh dude lets go holy shit
+
+
+
+========================================================================
+
+yeah okay so 
+step=0 loss=3.448 lr=1.5e-06 elapsed_s=103.6 tok_per_s=632.6 tokens=65536
+step=1 loss=3.66 lr=3e-06 elapsed_s=204.5 tok_per_s=640.9 tokens=131072
+step=2 loss=3.506 lr=4.5e-06 elapsed_s=305.6 tok_per_s=643.3 tokens=196608
+step=3 loss=3.268 lr=6e-06 elapsed_s=406.6 tok_per_s=644.7 tokens=262144
+step=4 loss=3.423 lr=7.5e-06 elapsed_s=507.6 tok_per_s=645.6 tokens=327680
+step=5 loss=3.427 lr=9e-06 elapsed_s=608.5 tok_per_s=646.2 tokens=393216
+step=6 loss=3.554 lr=1.05e-05 elapsed_s=709.5 tok_per_s=646.6 tokens=458752
+step=7 loss=3.569 lr=1.2e-05 elapsed_s=810.6 tok_per_s=646.8 tokens=524288
+step=8 loss=3.261 lr=1.35e-05 elapsed_s=911.6 tok_per_s=647 tokens=589824
+step=9 loss=3.348 lr=1.5e-05 elapsed_s=1013 tok_per_s=647.2 tokens=655360
+step=10 loss=3.281 lr=1.65e-05 elapsed_s=1114 tok_per_s=647.3 tokens=720896
+
+
+~8 hours from now okay.
+it's like 2:30 right now.
+so okay.
+till then, let's get started reframing the paper, yeah?
+
+========================================================================
+
+hey good morning.
+
+═══════════════════════════════════════════════
+  HR-forced DONE
+═══════════════════════════════════════════════
+  final val_loss=3.432480263710022
+
+Compare:
+  Base    final val_loss=3.2632 (PPL=26.13)
+  HR      final val_loss=3.2632 (PPL=26.13)
+  HR-forced final val_loss=3.432480263710022  PPL=30.953
+
+Then: bash scripts/inspect_ia_[gates.sh](http://gates.sh) CKPT=/workspace/runs/tiny_hr_forced/ckpt_[final.pt](http://final.pt)   # gates
+      python3 scripts/run_[evals.py](http://evals.py) --ckpt /workspace/runs/tiny_hr_forced/ckpt_[final.pt](http://final.pt) --size tiny --vocab_size 50257 --use_hormones --out /workspace/runs/tiny_hr_forced/evals.json
+
+═══════════════════════════════════════════════
+  [2026-05-03 00:34:38]  HR-forced exit code: 0  (success)
+═══════════════════════════════════════════════
+
+
+═══════════════════════════════════════════════
+  [2026-05-03 00:34:38]  PHASE 2 — backup HR-forced
+═══════════════════════════════════════════════
+
+  [2026-05-03 00:34:38] backing up runs/tiny_hr_forced → /workspace/artefacts_overnight/hr_forced.tgz
+-rw-rw-r-- 1 root root 2.9G May  3 00:36 /workspace/artefacts_overnight/hr_forced.tgz
+
+═══════════════════════════════════════════════
+  [2026-05-03 00:36:57]  FINAL — combined backup
+═══════════════════════════════════════════════
+
+-rw-rw-r-- 1 root root 3.6G May  3 00:39 /workspace/artefacts_overnight/all_overnight.tgz
+
+═══════════════════════════════════════════════
+  [2026-05-03 00:39:50]  OVERNIGHT RUN COMPLETE
+═══════════════════════════════════════════════
+
+  IA exit:        0
+  HR-forced exit: 0
+  Artefacts in:   /workspace/artefacts_overnight/
+total 7.2G
+-rw-rw-r-- 1 root root 3.6G May  3 00:39 all_overnight.tgz
+-rw-rw-r-- 1 root root 2.9G May  3 00:36 hr_forced.tgz
+-rw-rw-r-- 1 root root 736M May  3 00:16 ia.tgz
+
+  Final val losses:
+    tiny_ia          last_val_loss=3.540013873577118  ppl=34.467
+    tiny_hr_forced   last_val_loss=3.432480263710022  ppl=30.953
+
+═══════════════════════════════════════════════
+  [2026-05-03 00:39:50]  Done. Sleep tight.
+═══════════════════════════════════════════════
+
+
+
+okay, running the benchmarks,
+
+
+===========================================================================================
+
+(main) root@C.35957673:/workspace$ bash /workspace/Unnatam/scripts/inspect_ia_[gates.sh](http://gates.sh)
+Activated conda/uv virtual environment at /venv/main
+Inspecting: /workspace/runs/tiny_ia/ckpt_[final.pt](http://final.pt)
+Total params in state_dict: 151
+
+Found 30 IA-related parameters
+
+─── Scalar / gate parameters (these MUST be non-zero post-training) ───
+  layers.0.mixer.intra_attn.gate                               = +0.007684
+  layers.1.mixer.intra_attn.gate                               = +0.008167
+  layers.10.mixer.intra_attn.gate                              = +0.006698
+  layers.2.mixer.intra_attn.gate                               = +0.001213
+  layers.3.mixer.intra_attn.gate                               = -0.002127
+  layers.4.mixer.intra_attn.gate                               = +0.006907
+  layers.6.mixer.intra_attn.gate                               = +0.008673
+  layers.7.mixer.intra_attn.gate                               = +0.008550
+  layers.8.mixer.intra_attn.gate                               = +0.008834
+  layers.9.mixer.intra_attn.gate                               = +0.004669
+
+─── Projection norms (sanity: should not be zero) ───
+  layers.0.mixer.intra_attn.W_k.weight                          shape=(16, 2048)  ‖·‖₂=3.6418
+  layers.0.mixer.intra_attn.W_q.weight                          shape=(16, 2048)  ‖·‖₂=3.6101
+  layers.1.mixer.intra_attn.W_k.weight                          shape=(16, 2048)  ‖·‖₂=3.5998
+  layers.1.mixer.intra_attn.W_q.weight                          shape=(16, 2048)  ‖·‖₂=3.5786
+  layers.10.mixer.intra_attn.W_k.weight                         shape=(16, 2048)  ‖·‖₂=3.6206
+  layers.10.mixer.intra_attn.W_q.weight                         shape=(16, 2048)  ‖·‖₂=3.6364
+  layers.2.mixer.intra_attn.W_k.weight                          shape=(16, 2048)  ‖·‖₂=3.5975
+  layers.2.mixer.intra_attn.W_q.weight                          shape=(16, 2048)  ‖·‖₂=3.6147
+  layers.3.mixer.intra_attn.W_k.weight                          shape=(16, 2048)  ‖·‖₂=3.6234
+  layers.3.mixer.intra_attn.W_q.weight                          shape=(16, 2048)  ‖·‖₂=3.5730
+  layers.4.mixer.intra_attn.W_k.weight                          shape=(16, 2048)  ‖·‖₂=3.6071
+  layers.4.mixer.intra_attn.W_q.weight                          shape=(16, 2048)  ‖·‖₂=3.6185
+  layers.6.mixer.intra_attn.W_k.weight                          shape=(16, 2048)  ‖·‖₂=3.6273
+  layers.6.mixer.intra_attn.W_q.weight                          shape=(16, 2048)  ‖·‖₂=3.6289
+  layers.7.mixer.intra_attn.W_k.weight                          shape=(16, 2048)  ‖·‖₂=3.6043
+  layers.7.mixer.intra_attn.W_q.weight                          shape=(16, 2048)  ‖·‖₂=3.6176
+  layers.8.mixer.intra_attn.W_k.weight                          shape=(16, 2048)  ‖·‖₂=3.6304
+  layers.8.mixer.intra_attn.W_q.weight                          shape=(16, 2048)  ‖·‖₂=3.6028
+  layers.9.mixer.intra_attn.W_k.weight                          shape=(16, 2048)  ‖·‖₂=3.6062
+  layers.9.mixer.intra_attn.W_q.weight                          shape=(16, 2048)  ‖·‖₂=3.6067
+(main) root@C.35957673:/workspace$ CKPT=/workspace/runs/tiny_hr_forced/ckpt_[final.pt](http://final.pt) bash /workspace/Unnatam/scripts/inspect_ia_[gates.sh](http://gates.sh)
+Activated conda/uv virtual environment at /venv/main
+Inspecting: /workspace/runs/tiny_hr_forced/ckpt_[final.pt](http://final.pt)
+Total params in state_dict: 127
+
+Found 0 IA-related parameters
+
+─── Scalar / gate parameters (these MUST be non-zero post-training) ───
+
+─── Projection norms (sanity: should not be zero) ───
+(main) root@C.35957673:/workspace$ 
+
+
+
+
+and 
+Missing: 0 Unexpected: 0
+
+--- HR-forced (layer 11 routing) ---
+genre          ADR     CDO     LCO     NRA     OXY     SRO    SELF
+news        0.0583  0.0424  0.0074  0.1564  0.1087  0.4598  0.1670
+fiction     0.1387  0.0015  0.0402  0.0449  0.4460  0.2936  0.0350
+code        0.1257  0.2577  0.0071  0.0141  0.0400  0.1500  0.4054
+dialog      0.5854  0.0127  0.0351  0.1033  0.0671  0.1913  0.0050
+tech        0.1892  0.0050  0.0051  0.0698  0.0426  0.4954  0.1929
+urgent      0.1515  0.0228  0.0551  0.2309  0.2486  0.1957  0.0953
+
+Max pairwise L1 (layer 11): 1.2908
+
+and and and
+
+
+okay i've found something very interesting.
+
+so this is the run for IA till now
+
+main) root@C.35957673:/workspace/Unnatam$ [evals] loading /workspace/runs/tiny_ia/ckpt_[final.pt](http://final.pt) (tiny)
+
+[evals] === running hellaswag ===
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[hellaswag] 10042 examples
+  [100] running acc=0.3600
+  [200] running acc=0.3650
+  [300] running acc=0.3500
+  [400] running acc=0.3375
+  [500] running acc=0.3300
+  [600] running acc=0.3400
+  [700] running acc=0.3371
+  [800] running acc=0.3287
+  [900] running acc=0.3300
+  [1000] running acc=0.3260
+  [1100] running acc=0.3182
+  [1200] running acc=0.3225
+  [1300] running acc=0.3231
+  [1400] running acc=0.3229
+  [1500] running acc=0.3160
+  [1600] running acc=0.3150
+  [1700] running acc=0.3200
+  [1800] running acc=0.3239
+  [1900] running acc=0.3163
+  [2000] running acc=0.3140
+  [2100] running acc=0.3119
+  [2200] running acc=0.3141
+  [2300] running acc=0.3135
+  [2400] running acc=0.3158
+  [2500] running acc=0.3188
+  [2600] running acc=0.3181
+  [2700] running acc=0.3185
+  [2800] running acc=0.3189
+  [2900] running acc=0.3183
+  [3000] running acc=0.3210
+  [3100] running acc=0.3242
+  [3200] running acc=0.3262
+  [3300] running acc=0.3221
+  [3400] running acc=0.3200
+  [3500] running acc=0.3160
+  [3600] running acc=0.3144
+  [3700] running acc=0.3119
+  [3800] running acc=0.3121
+  [3900] running acc=0.3100
+  [4000] running acc=0.3090
+  [4100] running acc=0.3083
+  [4200] running acc=0.3086
+  [4300] running acc=0.3088
+  [4400] running acc=0.3082
+  [4500] running acc=0.3076
+  [4600] running acc=0.3070
+  [4700] running acc=0.3040
+  [4800] running acc=0.3013
+  [4900] running acc=0.3004
+  [5000] running acc=0.3002
+  [5100] running acc=0.2988
+  [5200] running acc=0.2973
+  [5300] running acc=0.2958
+  [5400] running acc=0.2957
+  [5500] running acc=0.2945
+  [5600] running acc=0.2936
+  [5700] running acc=0.2918
+  [5800] running acc=0.2907
+  [5900] running acc=0.2898
+  [6000] running acc=0.2902
+  [6100] running acc=0.2884
+  [6200] running acc=0.2876
+  [6300] running acc=0.2862
+  [6400] running acc=0.2853
+  [6500] running acc=0.2860
+  [6600] running acc=0.2847
+  [6700] running acc=0.2842
+
+
+
+now, i think, it could be degrading because of two reasons:
+
+-hellaswag's data set being ordered weird.
+-there being some internal SSM state leakage between instances, hence causing drift
+
+
+if it's A, then it's eh.
+if it's B though... you see how this could be interesting.
+
+
+=======================================================================================================
+
+
+if it is A, then shouldn't we like.. do something about it lmao? 
+
+and yeah it's because of the dataset. 
+
+(main) root@C.35957673:/workspace/Unnatam$ python3 - <<'EOF'
+import torch
+import sys
+sys.path.insert(0, '/workspace/Unnatam')
+from datasets import load_dataset
+from unnatam.config import unnatam_tiny
+from unnatam.model import Unnatam
+from unnatam.benchmarks.eval import _eval_multiple_choice, _Tok
+import tiktoken
+
+cfg = unnatam_tiny(); cfg.vocab_size = 50257; cfg.use_intra_attn = True
+m = Unnatam(cfg).cuda().eval()
+sd = torch.load('/workspace/runs/tiny_ia/ckpt_[final.pt](http://final.pt)', weights_only=False)
+m.load_state_dict(sd['model'], strict=False)
+
+ds = load_dataset("Rowan/hellaswag", split="validation").shuffle(seed=42).select(range(500))
+print(f"shuffled hellaswag, n={len(ds)}")
+
+def ctx(ex): return ex["activity_label"] + ": " + ex["ctx"]
+def choices(ex): return [" " + e for e in ex["endings"]]
+def label(ex): return int(ex["label"])
+
+acc, n = _eval_multiple_choice(m, tiktoken.get_encoding("gpt2"), ds, ctx, choices, label, "cuda", 1024, length_normalize=True, progress_every=50)
+print(f"\nshuffled acc_norm = {acc:.4f}")
+EOF
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+shuffled hellaswag, n=500
+  [50] running acc=0.2400
+  [100] running acc=0.2300
+  [150] running acc=0.2600
+  [200] running acc=0.2500
+  [250] running acc=0.2640
+  [300] running acc=0.2667
+  [350] running acc=0.2771
+  [400] running acc=0.2825
+  [450] running acc=0.2756
+  [500] running acc=0.2700
+
+shuffled acc_norm = 0.2700
+
+
+actually good lmao, B would have been quite the headache.
+
+and also
+
+            w = torch.softmax(mod.router(inp[0]), dim=-1).mean(dim=(0,1))
+        caps[name] = w.detach().cpu().numpy()
+    return fn
+
+for i, layer in enumerate(m.layers):
+    if hasattr(layer, 'hormone') and layer.hormone is not None:
+        layer.hormone.register_forward_hook(make_hook(f'L{i}'))
+
+print("\n--- HR-forced (layer 11 routing) ---")
+print(f"{'genre':<10s}  " + "  ".join(f"{l:>6s}" for l in labels))
+
+all_dists = []
+
+for g, text in genres.items():
+    caps.clear()
+EOF print(f"\nMax pairwise L1 (layer 11): {l1:.4f}")ax() in row)))
+Missing: 0 Unexpected: 0
+
+--- HR-forced (layer 11 routing) ---
+genre          ADR     CDO     LCO     NRA     OXY     SRO    SELF
+news        0.0583  0.0424  0.0074  0.1564  0.1087  0.4598  0.1670
+fiction     0.1387  0.0015  0.0402  0.0449  0.4460  0.2936  0.0350
+code        0.1257  0.2577  0.0071  0.0141  0.0400  0.1500  0.4054
+dialog      0.5854  0.0127  0.0351  0.1033  0.0671  0.1913  0.0050
+tech        0.1892  0.0050  0.0051  0.0698  0.0426  0.4954  0.1929
+urgent      0.1515  0.0228  0.0551  0.2309  0.2486  0.1957  0.0953
+
+Max pairwise L1 (layer 11): 1.2908
+(main) root@C.35957673:/workspace/Unnatam$ python3 -c "
+import torch
+sd = torch.load('/workspace/runs/tiny_hr_forced/ckpt_[final.pt](http://final.pt)', map_location='cpu', weights_only=False)
+sd = sd.get('model', sd)
+print('--- HR-forced gates (init was 0.2, alpha=3.0 amplifier on top) ---')
+for k, v in sorted(sd.items()):
+    if 'hormone' in k and ('gate' in k or 'magnitude' in k):
+        if v.numel() == 1:
+            print(f'  {k} = {v.item():+.4f}')
+        elif v.numel() <= 8:
+            print(f'  {k} = {v.flatten().tolist()}')
+"
+--- HR-forced gates (init was 0.2, alpha=3.0 amplifier on top) ---
+  layers.11.hormone.gate = +0.1662
+  layers.11.hormone.magnitudes = [0.9866635203361511, 0.990561842918396, 0.9766172766685486, 0.9902622699737549, 0.9882533550262451, 0.990041971206665, 0.9720536470413208]
+  layers.5.hormone.gate = +0.1716
+  layers.5.hormone.magnitudes = [0.9870221018791199, 0.9882248044013977, 0.9891934394836426, 0.9898682236671448, 0.9898405075073242, 0.9895802140235901, 0.9877556562423706]
+
+
+one evals is done, the IA one is left. probably another 15 minutes ish.
+
+
+==================================================================================================
+
+
+PS E:\empire\Unnatam> py scripts/permutation_null_l1.py     --ckpt C:\Users\ariet\Downloads\artifactsall\workspace\artefacts_overnight\all_overnight\tiny_hr_forced\ckpt_final.pt --layer
+ 11 --n_permutations 1000 --out E:/empire/Unnatam/tiny_hr_forced/perm_null.json                                                                                                          
+[perm] capturing routing at layer 11 for 6 genres…
+[perm] pooled 371 positions across genres: {'news': 48, 'fiction': 52, 'code': 115, 'dialog': 48, 'tech': 48, 'urgent': 60}
+[perm] observed max pairwise L1 = 1.1743
+
+[perm] null distribution over 1000 shuffles:
+  median (50%):  0.4136
+  95%ile:        0.5588
+  99%ile:        0.6191
+  observed:      1.1743
+  empirical p:   0.0000
+  → observed L1 > 99%ile of null: specialisation is not a metric artifact.

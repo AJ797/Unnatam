@@ -32,9 +32,9 @@ The finding is intermediate between the two extreme readings we had outlined in 
 - **Section 7.2** (Discussion) — updated the "loss-relevant axis" statement to describe schedule as the dominant (not sole) factor and cite the 79/21% split.
 - **Section 7.3** (Limitations) — HR-noext-confound paragraph now reflects that the isolation experiment was run and decomposes the damage; notes the remaining open question (whether an extracted-but-benign bank trained from-scratch would produce the same $+1.64$ PPL schedule effect).
 - **Abstract and Conclusion** — schedule-causality wording now cites the 79/21% decomposition explicitly rather than an unqualified schedule claim.
-- **Table 2 caption and Figure 10 (envelope diagram)** — updated to include the HR-noext-cont point and its interpretation.
+- **Table 2 caption and Figure 4 (envelope diagram)** — updated to include the HR-noext-cont point and its interpretation.
 
-Figure 10 in particular visualises the isolation cleanly: `HR-noext-cont` and `HR-noext` sit at nearly the same effective injection magnitude $\mu$ (0.30 vs 0.36) but at very different val PPL (26.56 vs 28.20). The vertical gap between the two same-$\mu$ points is the schedule-only contribution; the small residual of HR-noext-cont above the envelope band is the bank-content contribution.
+The envelope diagram (Figure 4) in particular visualises the isolation cleanly: `HR-noext-cont` and `HR-noext` sit at nearly the same effective injection magnitude $\mu$ (0.30 vs 0.36) but at very different val PPL (26.56 vs 28.20). The vertical gap between the two same-$\mu$ points is the schedule-only contribution; the small residual of HR-noext-cont above the envelope band is the bank-content contribution.
 
 The `run_stage1_plus_noext_cont.sh` orchestration script used for this run is in the released code.
 

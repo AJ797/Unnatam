@@ -266,12 +266,30 @@ def save_fig(fig, out_dir, name):
 # Figure 1 — validation loss curves (Stage 2)
 # ────────────────────────────────────────────────────────────────────────────
 
+def _val_curve_for(runs_dir: Path, variant: str):
+    """Try runs/tiny_{v}/train.jsonl first, then the flat UnnatamData layout
+    (UnnatamData/evals and train/tiny{vflat}train.jsonl) so the plot script
+    still works after the original checkpoint tree has been archived."""
+    steps, losses = val_curve(runs_dir / f"tiny_{variant}" / "train.jsonl")
+    if steps:
+        return steps, losses
+    vflat = variant.replace("_", "")
+    for cand in [
+        runs_dir.parent / "UnnatamData" / "evals and train" / f"tiny{vflat}train.jsonl",
+        Path(__file__).resolve().parent.parent / "UnnatamData" / "evals and train" / f"tiny{vflat}train.jsonl",
+    ]:
+        s, l = val_curve(cand)
+        if s:
+            return s, l
+    return [], []
+
+
 def fig_val_loss(runs_dir: Path, out_dir: Path):
     fig, axes = plt.subplots(1, 2, figsize=(10, 3.6))
     ax_lin, ax_zoom = axes
 
     for v in VARIANTS_HR_ORDERED:
-        steps, losses = val_curve(runs_dir / f"tiny_{v}" / "train.jsonl")
+        steps, losses = _val_curve_for(runs_dir, v)
         if not steps:
             print(f"  WARN: no val_loss in {v}")
             continue
