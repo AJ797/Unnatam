@@ -169,6 +169,6 @@ Within a broad homeostatic regime, these architectural differences are effective
 
 -----------
 
-## Paper link
+## Paper link (Published in TMLR)
 
-https://zenodo.org/records/21044635
+https://openreview.net/forum?id=uZuaQlxfwG&nesting=2&sort=date-desc
